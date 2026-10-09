@@ -68,10 +68,19 @@ class ToolbarBlend extends ChangeNotifier {
   /// must not react.
   bool get ownerIsCovered => owner?.isCovered ?? false;
 
-  /// Opacity of the whole chrome: full in front, dimmed while covered.
-  late final Animation<double> chromeOpacity = _cover.drive(
-    Tween<double>(begin: 1, end: kToolbarCoveredOpacity),
+  /// Opacity of the whole chrome: full in front, dimmed to
+  /// [kToolbarCoveredOpacity] while covered.
+  late final Animation<double> chromeOpacity = chromeOpacityFor(
+    kToolbarCoveredOpacity,
   );
+
+  /// Like [chromeOpacity], dimmed to [coveredOpacity] while covered instead.
+  /// At 0 the chrome is gone while a dialog or sheet is on top, as a native
+  /// sheet presented over the system bars hides them.
+  Animation<double> chromeOpacityFor(double coveredOpacity) {
+    assert(coveredOpacity >= 0 && coveredOpacity <= 1);
+    return _cover.drive(Tween<double>(begin: 1, end: coveredOpacity));
+  }
 
   /// Whether two pages are being blended right now.
   bool get isBlending => _driver != null;

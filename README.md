@@ -201,6 +201,11 @@ slide underneath it, the bar stays where it is, and only its items change.
   button appears when the page can go back and pops that page's own
   navigator.
 - **Dialogs and sheets** leave the bar in place, dimmed and not tappable.
+  `AdaptiveToolbarHost` takes `coveredOpacity` (the top toolbar) and
+  `duoBarCoveredOpacity` (the iPhone Duo vertical bar) to choose how far it
+  dims, from 0 to 1 (default 0.45). Native apps present sheets over the Duo's
+  vertical bar, so it disappears; pass `duoBarCoveredOpacity: 0` to hide it
+  while a dialog or sheet covers the page. It stays inert either way.
 - **iPhone Duo.** On the cover display, and on the inner display in
   landscape, iOS reserves a strip along one side for vertical controls. The
   package lays that strip out the way the system does, from the top: the

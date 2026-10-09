@@ -81,12 +81,17 @@ class HostedTopToolbar extends StatelessWidget {
     super.key,
     required this.blend,
     this.titleOnly = false,
+    this.coveredOpacity = kToolbarCoveredOpacity,
   });
 
   final ToolbarBlend blend;
 
   /// True on iPhone Duo, where the controls live in the vertical bar.
   final bool titleOnly;
+
+  /// Opacity of the toolbar while a dialog or sheet covers the page that owns
+  /// it.
+  final double coveredOpacity;
 
   @override
   Widget build(BuildContext context) {
@@ -136,7 +141,7 @@ class HostedTopToolbar extends StatelessWidget {
         child: IgnorePointer(
           ignoring: blend.ownerIsCovered,
           child: FadeTransition(
-            opacity: blend.chromeOpacity,
+            opacity: blend.chromeOpacityFor(coveredOpacity),
             // Every layer is keyed, so a page's native bar survives the start
             // and the end of a blend instead of being torn down and rebuilt.
             child: Stack(

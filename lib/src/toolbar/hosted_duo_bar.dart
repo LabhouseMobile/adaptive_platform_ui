@@ -11,10 +11,18 @@ import 'toolbar_registry.dart';
 /// the page that owns the chrome, blended as [ToolbarBlend] dictates. A back
 /// button that both pages show stays put instead of fading out and in.
 class HostedDuoBar extends StatelessWidget {
-  const HostedDuoBar({super.key, required this.blend, required this.regions});
+  const HostedDuoBar({
+    super.key,
+    required this.blend,
+    required this.regions,
+    this.coveredOpacity = kToolbarCoveredOpacity,
+  });
 
   final ToolbarBlend blend;
   final List<ReservedRegion> regions;
+
+  /// Opacity of the bar while a dialog or sheet covers the page that owns it.
+  final double coveredOpacity;
 
   @override
   Widget build(BuildContext context) {
@@ -66,7 +74,7 @@ class HostedDuoBar extends StatelessWidget {
     return IgnorePointer(
       ignoring: blend.ownerIsCovered,
       child: FadeTransition(
-        opacity: blend.chromeOpacity,
+        opacity: blend.chromeOpacityFor(coveredOpacity),
         child: Stack(
           fit: StackFit.expand,
           children: [
