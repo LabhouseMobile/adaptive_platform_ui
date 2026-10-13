@@ -28,12 +28,26 @@ class AdaptiveToolbarHost extends StatefulWidget {
   const AdaptiveToolbarHost({
     super.key,
     required this.child,
+    this.coveredOpacity = kToolbarCoveredOpacity,
+    this.duoBarCoveredOpacity = kToolbarCoveredOpacity,
     @visibleForTesting this.debugFold,
     @visibleForTesting this.debugVerticalBarEdge,
-  });
+  }) : assert(coveredOpacity >= 0 && coveredOpacity <= 1),
+       assert(duoBarCoveredOpacity >= 0 && duoBarCoveredOpacity <= 1);
 
   /// The navigator (or whatever the app's `builder` receives).
   final Widget child;
+
+  /// Opacity of the top toolbar while a dialog or sheet covers the page that
+  /// owns it, from 0 to 1. The toolbar is inert while covered whatever the
+  /// value. 0 hides it for as long as the dialog or sheet is up.
+  final double coveredOpacity;
+
+  /// Opacity of the iPhone Duo vertical bar while a dialog or sheet covers
+  /// the page that owns it, from 0 to 1. The bar is inert while covered
+  /// whatever the value. 0 hides the bar while a dialog or sheet covers the
+  /// page, like native sheets presented over the system bars.
+  final double duoBarCoveredOpacity;
 
   /// Replaces the platform's fold readings (the reserved regions) and the
   /// iOS 26 check, so the chrome can be exercised in widget tests anywhere.
@@ -150,7 +164,11 @@ class _AdaptiveToolbarHostState extends State<AdaptiveToolbarHost>
               // View panes), and rebuild every route.
               _BarInset(pose: pose, child: widget.child),
               if (hostsToolbar)
-                HostedTopToolbar(blend: _blend, titleOnly: pose != null),
+                HostedTopToolbar(
+                  blend: _blend,
+                  titleOnly: pose != null,
+                  coveredOpacity: widget.coveredOpacity,
+                ),
               if (pose != null)
                 // The bar sits on whichever edge the pose names: the right in
                 // most poses, the left in the leading Split View pane.
@@ -163,6 +181,7 @@ class _AdaptiveToolbarHostState extends State<AdaptiveToolbarHost>
                   child: HostedDuoBar(
                     blend: _blend,
                     regions: fold?.regions ?? const <ReservedRegion>[],
+                    coveredOpacity: widget.duoBarCoveredOpacity,
                   ),
                 ),
             ],

@@ -2,6 +2,7 @@ import 'package:adaptive_platform_ui/adaptive_platform_ui.dart';
 import 'package:adaptive_platform_ui/src/platform/system_vertical_bar.dart';
 import 'package:adaptive_platform_ui/src/toolbar/duo_vertical_bar.dart';
 import 'package:adaptive_platform_ui/src/toolbar/hosted_duo_bar.dart';
+import 'package:adaptive_platform_ui/src/toolbar/hosted_top_toolbar.dart';
 import 'package:adaptive_platform_ui/src/toolbar/toolbar_blend.dart';
 import 'package:adaptive_platform_ui/src/toolbar/toolbar_chrome_scope.dart';
 import 'package:adaptive_platform_ui/src/widgets/ios26/ios26_scaffold.dart';
@@ -64,9 +65,13 @@ Widget hostedApp({
   required Widget home,
   GlobalKey<NavigatorState>? navigatorKey,
   SystemVerticalBarEdge? edge,
+  double coveredOpacity = kToolbarCoveredOpacity,
+  double duoBarCoveredOpacity = kToolbarCoveredOpacity,
 }) => MaterialApp(
   navigatorKey: navigatorKey,
   builder: (context, child) => AdaptiveToolbarHost(
+    coveredOpacity: coveredOpacity,
+    duoBarCoveredOpacity: duoBarCoveredOpacity,
     debugFold: duoInnerDisplay(),
     debugVerticalBarEdge: edge,
     child: child!,
@@ -269,6 +274,173 @@ void main() {
     expect(chromeOpacity(tester), 1);
     await tester.tap(inBar(find.byIcon(Icons.add)));
     expect(added, 1);
+  });
+
+  group('opacity while covered', () {
+    /// The fade that dims the whole top toolbar (the title band on a Duo).
+    double topOpacity(WidgetTester tester) => tester
+        .widget<FadeTransition>(
+          find
+              .descendant(
+                of: find.byType(HostedTopToolbar),
+                matching: find.byType(FadeTransition),
+              )
+              .first,
+        )
+        .opacity
+        .value;
+
+    Future<GlobalKey<NavigatorState>> pumpHome(
+      WidgetTester tester, {
+      double coveredOpacity = kToolbarCoveredOpacity,
+      double duoBarCoveredOpacity = kToolbarCoveredOpacity,
+      VoidCallback? onAction,
+    }) async {
+      useDuoLandscape(tester);
+      final nav = GlobalKey<NavigatorState>();
+      await tester.pumpWidget(
+        hostedApp(
+          navigatorKey: nav,
+          coveredOpacity: coveredOpacity,
+          duoBarCoveredOpacity: duoBarCoveredOpacity,
+          home: page('Home', action: Icons.add, onAction: onAction),
+        ),
+      );
+      await tester.pump();
+      return nav;
+    }
+
+    void coverWithDialog(GlobalKey<NavigatorState> nav) {
+      showDialog<void>(
+        context: nav.currentContext!,
+        barrierDismissible: false,
+        builder: (_) => const AlertDialog(title: Text('Sure?')),
+      );
+    }
+
+    testWidgets('default: both dim to kToolbarCoveredOpacity', (tester) async {
+      final nav = await pumpHome(tester);
+      expect(chromeOpacity(tester), 1);
+      expect(topOpacity(tester), 1);
+
+      coverWithDialog(nav);
+      await tester.pumpAndSettle();
+      expect(chromeOpacity(tester), kToolbarCoveredOpacity);
+      expect(topOpacity(tester), kToolbarCoveredOpacity);
+    });
+
+    testWidgets('duoBarCoveredOpacity: 0 hides the bar under a dialog', (
+      tester,
+    ) async {
+      var added = 0;
+      final nav = await pumpHome(
+        tester,
+        duoBarCoveredOpacity: 0,
+        onAction: () => added++,
+      );
+      expect(chromeOpacity(tester), 1);
+
+      coverWithDialog(nav);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 30));
+      await tester.pump(const Duration(milliseconds: 30));
+      await tester.pump(const Duration(milliseconds: 120));
+      expect(chromeOpacity(tester), allOf(greaterThan(0), lessThan(1)));
+      await tester.pumpAndSettle();
+
+      expect(chromeOpacity(tester), 0);
+      expect(
+        tester
+            .widget<IgnorePointer>(
+              find
+                  .descendant(of: bar, matching: find.byType(IgnorePointer))
+                  .first,
+            )
+            .ignoring,
+        isTrue,
+      );
+      await tester.tap(inBar(find.byIcon(Icons.add)), warnIfMissed: false);
+      expect(added, 0);
+      // The top toolbar keeps following its own value.
+      expect(topOpacity(tester), kToolbarCoveredOpacity);
+
+      nav.currentState!.pop();
+      await tester.pumpAndSettle();
+      expect(chromeOpacity(tester), 1);
+      await tester.tap(inBar(find.byIcon(Icons.add)));
+      expect(added, 1);
+    });
+
+    testWidgets('duoBarCoveredOpacity: 0 hides the bar under a sheet', (
+      tester,
+    ) async {
+      final nav = await pumpHome(tester, duoBarCoveredOpacity: 0);
+
+      showModalBottomSheet<void>(
+        context: nav.currentContext!,
+        builder: (_) => const SizedBox(height: 200, child: Text('Sheet')),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Sheet'), findsOneWidget);
+      expect(chromeOpacity(tester), 0);
+
+      nav.currentState!.pop();
+      await tester.pumpAndSettle();
+      expect(chromeOpacity(tester), 1);
+    });
+
+    testWidgets('coveredOpacity applies to the top toolbar only', (
+      tester,
+    ) async {
+      final nav = await pumpHome(tester, coveredOpacity: 0.2);
+
+      coverWithDialog(nav);
+      await tester.pumpAndSettle();
+      expect(topOpacity(tester), 0.2);
+      expect(chromeOpacity(tester), kToolbarCoveredOpacity);
+
+      nav.currentState!.pop();
+      await tester.pumpAndSettle();
+      expect(topOpacity(tester), 1);
+    });
+
+    testWidgets('new values take effect when the host rebuilds', (
+      tester,
+    ) async {
+      final nav = await pumpHome(tester);
+      coverWithDialog(nav);
+      await tester.pumpAndSettle();
+      expect(chromeOpacity(tester), kToolbarCoveredOpacity);
+      expect(topOpacity(tester), kToolbarCoveredOpacity);
+
+      // Same widget tree, new values, while the dialog is still up.
+      await tester.pumpWidget(
+        hostedApp(
+          navigatorKey: nav,
+          coveredOpacity: 0.1,
+          duoBarCoveredOpacity: 0,
+          home: page('Home', action: Icons.add),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(chromeOpacity(tester), 0);
+      expect(topOpacity(tester), 0.1);
+    });
+
+    test('values outside 0..1 are rejected', () {
+      expect(
+        () => AdaptiveToolbarHost(
+          duoBarCoveredOpacity: 1.5,
+          child: const SizedBox(),
+        ),
+        throwsAssertionError,
+      );
+      expect(
+        () =>
+            AdaptiveToolbarHost(coveredOpacity: -0.1, child: const SizedBox()),
+        throwsAssertionError,
+      );
+    });
   });
 
   testWidgets('a dialog on the outer navigator covers a page inside a tab', (
