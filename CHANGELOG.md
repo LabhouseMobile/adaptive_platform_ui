@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [1.0.1-lh2]
 * **NEW**: `coveredOpacity` and `duoBarCoveredOpacity` on `AdaptiveToolbarHost` set how far the top toolbar and the iPhone Duo vertical bar dim while a dialog or sheet covers the page (default 0.45, as before). Native sheets are presented over the Duo's vertical bar, so apps can now hide it with `duoBarCoveredOpacity: 0`. The chrome is inert while covered either way
 
 ## [1.0.1-lh1]
