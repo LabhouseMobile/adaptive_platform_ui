@@ -459,6 +459,60 @@ void main() {
       expect(overflow.items.single.menu!.last.symbol, isNotNull);
     });
 
+    testWidgets('with room for all, at most three controls show', (
+      tester,
+    ) async {
+      const labels = ['Favorite', 'Share', 'Search', 'Folder', 'Delete'];
+      await tester.pumpWidget(
+        MaterialApp(
+          home: MediaQuery(
+            data: const MediaQueryData(
+              size: Size(951, 669),
+              padding: duoPadding,
+              viewPadding: duoPadding,
+            ),
+            child: Align(
+              alignment: Alignment.topRight,
+              child: SizedBox(
+                width: poseOf(duoPadding).bandWidth,
+                height: 669,
+                child: DuoVerticalBar(
+                  actions: [
+                    for (final (i, icon) in const [
+                      Icons.favorite,
+                      Icons.share,
+                      Icons.search,
+                      Icons.folder,
+                      Icons.delete,
+                    ].indexed)
+                      AdaptiveAppBarAction(
+                        icon: icon,
+                        iosSymbol: 'symbol.$i',
+                        label: labels[i],
+                        onPressed: () {},
+                      ),
+                  ],
+                  regions: const [duoCamera],
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      expect(tester.takeException(), isNull);
+      expect(find.byIcon(Icons.favorite), findsOneWidget);
+      expect(find.byIcon(Icons.share), findsOneWidget);
+      expect(find.byIcon(Icons.search), findsNothing);
+      expect(find.byIcon(CupertinoIcons.ellipsis), findsOneWidget);
+      final more = tester
+          .widgetList<IOS26GlassCapsule>(find.byType(IOS26GlassCapsule))
+          .expand((c) => c.items)
+          .singleWhere((item) => item.menu != null);
+      expect(more.symbol, 'ellipsis.circle');
+      expect(more.menu!.map((e) => e.title), ['Search', 'Folder', 'Delete']);
+    });
+
     testWidgets('the title sits at the leading edge', (tester) async {
       tester.view.physicalSize = duoLandscape;
       tester.view.devicePixelRatio = 1;

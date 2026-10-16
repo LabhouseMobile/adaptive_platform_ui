@@ -1,8 +1,13 @@
 import 'package:adaptive_platform_ui/adaptive_platform_ui.dart';
+import 'package:adaptive_platform_ui/src/toolbar/duo_vertical_bar.dart'
+    show kMaxToolbarActions;
 import 'package:adaptive_platform_ui/src/toolbar/hosted_duo_bar.dart';
 import 'package:adaptive_platform_ui/src/toolbar/hosted_top_toolbar.dart';
 import 'package:adaptive_platform_ui/src/toolbar/toolbar_chrome_scope.dart';
+import 'package:flutter/cupertino.dart' show CupertinoIcons;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foldable/foldable.dart';
 
@@ -258,6 +263,134 @@ void main() {
         ),
         findsOneWidget,
       );
+    });
+  });
+
+  group('fitTopToolbarActions', () {
+    List<AdaptiveAppBarAction> actions(int count) => [
+      for (var i = 0; i < count; i++)
+        AdaptiveAppBarAction(
+          iosSymbol: 'circle',
+          label: 'a$i',
+          onPressed: () {},
+        ),
+    ];
+
+    test('keeps every action when they fit', () {
+      final three = actions(3);
+      expect(fitTopToolbarActions(three), three);
+      expect(fitTopToolbarActions(const []), isEmpty);
+    });
+
+    test('moves the rest, in order, into an ellipsis menu', () {
+      final five = actions(5);
+      final fitted = fitTopToolbarActions(five);
+
+      expect(fitted, hasLength(kMaxToolbarActions));
+      expect(fitted.take(2), five.take(2));
+      expect(fitted.last.iosSymbol, 'ellipsis.circle');
+      expect(fitted.last.label, 'More');
+      expect(fitted.last.menu, five.skip(2).toList());
+    });
+
+    test('with room for one, everything is in the menu', () {
+      final fitted = fitTopToolbarActions(actions(2), max: 1);
+      expect(fitted, hasLength(1));
+      expect(fitted.single.menu, hasLength(2));
+    });
+  });
+
+  group('top toolbar overflow', () {
+    Widget pageWith(List<AdaptiveAppBarAction> actions) => AdaptiveScaffold(
+      appBar: AdaptiveAppBar(
+        title: 'Recording',
+        useNativeToolbar: true,
+        actions: actions,
+      ),
+      body: const SizedBox.expand(),
+    );
+
+    List<AdaptiveAppBarAction> fiveActions(List<String> pressed) => [
+      for (final (i, icon) in const [
+        Icons.favorite,
+        Icons.share,
+        Icons.search,
+        Icons.folder,
+        Icons.delete,
+      ].indexed)
+        AdaptiveAppBarAction(
+          iosSymbol: 'circle',
+          icon: icon,
+          label: 'action $i',
+          onPressed: () => pressed.add('action $i'),
+        ),
+    ];
+
+    testWidgets('shows two actions and an ellipsis', (tester) async {
+      usePhone(tester);
+      await tester.pumpWidget(hostedApp(home: pageWith(fiveActions([]))));
+      await tester.pump();
+
+      expect(inBar(find.byIcon(Icons.favorite)), findsOneWidget);
+      expect(inBar(find.byIcon(Icons.share)), findsOneWidget);
+      expect(inBar(find.byIcon(Icons.search)), findsNothing);
+      expect(inBar(find.byIcon(CupertinoIcons.ellipsis)), findsOneWidget);
+    });
+
+    testWidgets('on iOS the native bar gets the menu and runs the chosen '
+        'entry', (tester) async {
+      usePhone(tester);
+      debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+      final messenger = tester.binding.defaultBinaryMessenger;
+      final toolbars = <int, Map<Object?, Object?>>{};
+      messenger.setMockMethodCallHandler(SystemChannels.platform_views, (
+        call,
+      ) async {
+        if (call.method == 'create') {
+          final args = call.arguments as Map<Object?, Object?>;
+          if (args['viewType'] == 'adaptive_platform_ui/ios26_toolbar') {
+            final params = args['params']! as Uint8List;
+            toolbars[args['id']! as int] =
+                const StandardMessageCodec().decodeMessage(
+                      ByteData.sublistView(params),
+                    )
+                    as Map<Object?, Object?>;
+          }
+        }
+        return null;
+      });
+      addTearDown(
+        () => messenger.setMockMethodCallHandler(
+          SystemChannels.platform_views,
+          null,
+        ),
+      );
+
+      final pressed = <String>[];
+      await tester.pumpWidget(hostedApp(home: pageWith(fiveActions(pressed))));
+      await tester.pump();
+
+      final MapEntry(key: id, value: params) = toolbars.entries.single;
+      final native = (params['actions']! as List<Object?>)
+          .cast<Map<Object?, Object?>>();
+      expect(native, hasLength(3));
+      expect(native.last['icon'], 'ellipsis.circle');
+      expect(native.last['menu'], [
+        {'title': 'action 2', 'icon': 'circle'},
+        {'title': 'action 3', 'icon': 'circle'},
+        {'title': 'action 4', 'icon': 'circle'},
+      ]);
+
+      await messenger.handlePlatformMessage(
+        'adaptive_platform_ui/ios26_toolbar_$id',
+        const StandardMethodCodec().encodeMethodCall(
+          const MethodCall('onMenuActionTapped', {'index': 2, 'entry': 1}),
+        ),
+        (_) {},
+      );
+      expect(pressed, ['action 3']);
+
+      debugDefaultTargetPlatformOverride = null;
     });
   });
 }

@@ -30,6 +30,11 @@ const double kDuoVerticalBarBezelInset = 12.0;
 /// controls never start out underneath the cluster.
 const double kDuoStatusClusterFallbackHeight = 170.0;
 
+/// How many toolbar actions a bar shows, its overflow menu included: the
+/// iPhone Duo vertical bar and the top toolbar. Past that the first
+/// `kMaxToolbarActions - 1` stay and the rest move into the overflow menu.
+const int kMaxToolbarActions = 3;
+
 /// The edge of the window the system reserves for vertical controls.
 enum DuoBarSide { left, right }
 
@@ -547,10 +552,14 @@ class DuoVerticalBar extends StatelessWidget {
   /// before the tab bar does, which keeps the primary destinations reachable:
   /// the items that do not fit move, from the bottom up, into one overflow
   /// menu, as the system does. A group can be split, so its first items stay
-  /// visible while the rest moves into the menu.
+  /// visible while the rest moves into the menu. However much room there is,
+  /// at most [kMaxToolbarActions] controls show, the menu included.
   List<Widget> _controls(double room) {
     final groups = groupsOf(actions);
     final total = actions.length;
+    final maxShown = total > kMaxToolbarActions
+        ? kMaxToolbarActions - 1
+        : total;
     var used = leading == null ? 0.0 : IOS26GlassCapsule.width;
     final overflowCost =
         kDuoBarGroupSpacing + IOS26GlassCapsule.actionsHeight(1);
@@ -561,6 +570,10 @@ class DuoVerticalBar extends StatelessWidget {
     for (final group in groups) {
       var capsule = <AdaptiveAppBarAction>[];
       for (final action in group) {
+        if (count == maxShown) {
+          if (capsule.isNotEmpty) shown.add(capsule);
+          break outer;
+        }
         // Growing a capsule costs one more row; starting one costs a whole
         // control plus the gap before it.
         final cost = capsule.isEmpty
@@ -614,7 +627,7 @@ class _OverflowCapsule extends StatelessWidget {
       child: IOS26GlassCapsule(
         items: [
           GlassCapsuleItem(
-            symbol: 'ellipsis',
+            symbol: 'ellipsis.circle',
             label: 'More',
             fallback: const Icon(CupertinoIcons.ellipsis, size: 22),
             menu: [

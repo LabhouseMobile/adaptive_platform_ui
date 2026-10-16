@@ -221,8 +221,11 @@ slide underneath it, the bar stays where it is, and only its items change.
   and the top bar sits inside the hardware strip at the top, level with the
   clock and ending before the status cluster, so pages start right below the
   strip instead of below a bar of their own.
-- **Overflow.** When the strip runs out of room, toolbar items move, from the
-  bottom up, into the system overflow menu, and the tab bar stays whole.
+- **Overflow.** Both bars show at most three items (`kMaxToolbarActions`):
+  past that, the first two and an ellipsis whose native menu holds the rest.
+  When the strip runs out of room first, toolbar items move, from the bottom
+  up, into that menu, and the tab bar stays whole. An action with a `menu`
+  opens those actions in a native menu when tapped.
   Give every icon action a `label` so it has a name there:
 
 ```dart

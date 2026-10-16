@@ -223,7 +223,28 @@ class iOS26ToolbarPlatformView: NSObject, FlutterPlatformView {
             for (index, action) in actions.enumerated() {
                 var button: UIBarButtonItem?
 
-                if let icon = action["icon"] as? String {
+                if let entries = action["menu"] as? [[String: Any]] {
+                    // The overflow control: tapping it opens a native menu.
+                    let menu = UIMenu(children: entries.enumerated().map { entryIndex, entry in
+                        let symbol = entry["icon"] as? String
+                        return UIAction(
+                            title: entry["title"] as? String ?? "",
+                            image: symbol.flatMap { UIImage(systemName: $0) ?? UIImage(named: $0) }
+                        ) { [weak self] _ in
+                            self?.channel.invokeMethod(
+                                "onMenuActionTapped",
+                                arguments: ["index": index, "entry": entryIndex]
+                            )
+                        }
+                    })
+                    let icon = action["icon"] as? String
+                    button = UIBarButtonItem(
+                        title: icon == nil ? action["title"] as? String : nil,
+                        image: icon.flatMap { UIImage(systemName: $0) ?? UIImage(named: $0) },
+                        primaryAction: nil,
+                        menu: menu
+                    )
+                } else if let icon = action["icon"] as? String {
                     button = UIBarButtonItem(
                         image: UIImage(systemName: icon) ?? UIImage(named: icon),
                         style: .plain,

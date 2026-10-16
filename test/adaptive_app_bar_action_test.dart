@@ -234,5 +234,57 @@ void main() {
 
       expect(map['spacerAfter'], 2); // ToolbarSpacerType.flexible.index
     });
+
+    test(
+      'toNativeMap sends a menu entry per action, named and with symbol',
+      () {
+        final action = AdaptiveAppBarAction(
+          iosSymbol: 'ellipsis',
+          onPressed: () {},
+          menu: [
+            AdaptiveAppBarAction(
+              iosSymbol: 'pencil',
+              label: 'Rename',
+              onPressed: () {},
+            ),
+            AdaptiveAppBarAction(title: 'Delete', onPressed: () {}),
+          ],
+        );
+
+        expect(action.toNativeMap()['menu'], [
+          {'title': 'Rename', 'icon': 'pencil'},
+          {'title': 'Delete'},
+        ]);
+      },
+    );
+
+    test('toNativeMap has no menu when there is none', () {
+      final action = AdaptiveAppBarAction(iosSymbol: 'heart', onPressed: () {});
+
+      expect(action.toNativeMap().containsKey('menu'), isFalse);
+    });
+
+    test('equality and hashCode take the menu into account', () {
+      AdaptiveAppBarAction more(List<String> labels) => AdaptiveAppBarAction(
+        iosSymbol: 'ellipsis',
+        onPressed: () {},
+        menu: [
+          for (final label in labels)
+            AdaptiveAppBarAction(
+              iosSymbol: 'circle',
+              label: label,
+              onPressed: () {},
+            ),
+        ],
+      );
+
+      expect(more(['a', 'b']), more(['a', 'b']));
+      expect(more(['a', 'b']).hashCode, more(['a', 'b']).hashCode);
+      expect(more(['a', 'b']), isNot(more(['a', 'c'])));
+      expect(
+        more(['a']),
+        isNot(AdaptiveAppBarAction(iosSymbol: 'ellipsis', onPressed: () {})),
+      );
+    });
   });
 }
