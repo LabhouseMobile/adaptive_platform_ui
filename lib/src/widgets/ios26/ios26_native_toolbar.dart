@@ -21,6 +21,7 @@ class IOS26NativeToolbar extends StatefulWidget {
     this.height = 44.0,
     this.showNativeView = true,
     this.showsGradient = true,
+    this.ignoresSafeArea = false,
   });
 
   final String? title;
@@ -48,6 +49,12 @@ class IOS26NativeToolbar extends StatefulWidget {
   /// The fixed toolbar host turns it off and draws one gradient of its own
   /// behind all page layers.
   final bool showsGradient;
+
+  /// Whether the native bar fills the view from its top edge instead of
+  /// starting at the system's top safe-area inset. For a bar placed inside
+  /// that inset (the iPhone Duo top strip), which UIKit would otherwise push
+  /// out of the view. Read once, when the native view is created.
+  final bool ignoresSafeArea;
 
   @override
   State<IOS26NativeToolbar> createState() => _IOS26NativeToolbarState();
@@ -169,6 +176,7 @@ class _IOS26NativeToolbarState extends State<IOS26NativeToolbar> {
         'actions': widget.actions!.map((a) => a.toNativeMap()).toList(),
       'isDark': _isDark,
       if (!widget.showsGradient) 'showsGradient': false,
+      if (widget.ignoresSafeArea) 'ignoresSafeArea': true,
       if (widget.tintColor != null) 'tint': _colorToARGB(widget.tintColor!),
     };
 

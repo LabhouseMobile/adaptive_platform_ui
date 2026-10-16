@@ -142,6 +142,42 @@ abstract final class DuoLayout {
     return null;
   }
 
+  /// The iPhone Duo top strip the top toolbar sits in, or null where it sits
+  /// below the top inset as on other devices.
+  ///
+  /// Only a foldable ([fold] says so) without a vertical bar [pose] has one:
+  /// the inner display in portrait. Its top inset is the hardware strip, empty
+  /// but for the status cluster at the trailing end, so the bar fits beside
+  /// the cluster. An inset too short to hold the bar at [kDuoTopBarTop] is not
+  /// treated as one.
+  ///
+  /// The cluster's room is [kDuoStatusClusterClearance], or more when the
+  /// reserved regions put the cluster further in: an active occlusion in the
+  /// trailing half of the strip.
+  static DuoTopStrip? resolveTopStrip({
+    required EdgeInsets viewPadding,
+    required Size size,
+    required DuoPose? pose,
+    required FoldableData? fold,
+    required double barHeight,
+  }) {
+    if (pose != null || fold == null || !fold.isFoldable) return null;
+    final height = viewPadding.top;
+    if (height < kDuoTopBarTop + barHeight) return null;
+    var clearance = kDuoStatusClusterClearance;
+    for (final region in fold.regions) {
+      if (region.kind != ReservedRegionKind.occlusion || !region.isActive) {
+        continue;
+      }
+      final bounds = region.bounds;
+      if (bounds.top >= height || bounds.left < size.width / 2) continue;
+      if (bounds.left > size.width) continue;
+      final room = size.width - bounds.left;
+      if (room > clearance) clearance = room;
+    }
+    return DuoTopStrip(height: height, trailingClearance: clearance);
+  }
+
   /// Whether toolbar controls belong in a vertical bar right now.
   static bool isVerticalBarPose(EdgeInsets viewPadding) =>
       barSide(viewPadding) != null;
@@ -216,10 +252,25 @@ abstract final class DuoLayout {
 /// and the page body agree on one decision instead of re-reading insets the
 /// host may have adjusted.
 class DuoPoseScope extends InheritedWidget {
-  const DuoPoseScope({super.key, required this.pose, required super.child});
+  const DuoPoseScope({
+    super.key,
+    required this.pose,
+    this.topStrip,
+    required super.child,
+  });
 
   /// The pose in effect, or null where bars stay horizontal.
   final DuoPose? pose;
+
+  /// Where bars stay horizontal on iPhone Duo (the inner display in
+  /// portrait), the hardware strip at the top that the top toolbar sits in.
+  /// Null everywhere else, and whenever [pose] is not null.
+  final DuoTopStrip? topStrip;
+
+  /// The top strip in effect here, or null when the top toolbar sits below
+  /// the top inset as usual (and when there is no scope).
+  static DuoTopStrip? topStripOf(BuildContext context) =>
+      maybeOf(context)?.topStrip;
 
   /// The nearest scope, or null when there is none. Tells "no scope" apart
   /// from a scope whose pose is null (a decision for horizontal bars).
@@ -237,7 +288,56 @@ class DuoPoseScope extends InheritedWidget {
   }
 
   @override
-  bool updateShouldNotify(DuoPoseScope oldWidget) => pose != oldWidget.pose;
+  bool updateShouldNotify(DuoPoseScope oldWidget) =>
+      pose != oldWidget.pose || topStrip != oldWidget.topStrip;
+}
+
+/// Top of the top toolbar's 44-point content inside the iPhone Duo top strip.
+/// Measured on the system's own bar (Safari, inner display in portrait, iOS
+/// 27.1 simulator): its controls are centred 50 points below the top edge,
+/// level with the clock.
+const double kDuoTopBarTop = 28.0;
+
+/// Room the system's top bar leaves at the trailing end of the iPhone Duo top
+/// strip for the status cluster (clock, connectivity, camera). Measured with
+/// [kDuoTopBarTop]: the bar's last control ends 14 points before the clock,
+/// and the bar keeps its usual 20-point margin past it.
+const double kDuoStatusClusterClearance = 116.0;
+
+/// The hardware strip at the top of the iPhone Duo inner display in portrait.
+///
+/// It is the same strip that runs down the trailing edge in landscape, where
+/// the system draws its vertical bar inside it. In portrait the bars stay
+/// horizontal, and the system draws the top bar inside the strip as well:
+/// level with the clock, ending before the status cluster, instead of below
+/// the whole inset as on other iPhones. Content still starts below the strip.
+@immutable
+class DuoTopStrip {
+  const DuoTopStrip({required this.height, required this.trailingClearance});
+
+  /// Height of the strip: the window's top inset.
+  final double height;
+
+  /// Distance from the window's right edge to the end of the top bar, which
+  /// keeps the status cluster clear.
+  final double trailingClearance;
+
+  /// Top of the top bar's content area, measured from the top of the window.
+  double get barTop => kDuoTopBarTop;
+
+  @override
+  bool operator ==(Object other) =>
+      other is DuoTopStrip &&
+      other.height == height &&
+      other.trailingClearance == trailingClearance;
+
+  @override
+  int get hashCode => Object.hash(height, trailingClearance);
+
+  @override
+  String toString() =>
+      'top strip ${height.toStringAsFixed(0)}pt, '
+      'clearance ${trailingClearance.toStringAsFixed(0)}pt';
 }
 
 /// Space the system leaves between the controls and a free edge of the

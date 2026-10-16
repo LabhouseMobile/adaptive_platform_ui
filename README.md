@@ -217,7 +217,10 @@ slide underneath it, the bar stays where it is, and only its items change.
   clear of the camera wherever the rotation puts it. In Split View on the
   inner display, an app in the left pane gets the bar on its left edge, like
   native apps, and the page body and `SafeArea` stay clear of it. On the
-  inner display in portrait the bars stay horizontal, as they do in UIKit.
+  inner display in portrait the bars stay horizontal, as they do in UIKit,
+  and the top bar sits inside the hardware strip at the top, level with the
+  clock and ending before the status cluster, so pages start right below the
+  strip instead of below a bar of their own.
 - **Overflow.** When the strip runs out of room, toolbar items move, from the
   bottom up, into the system overflow menu, and the tab bar stays whole.
   Give every icon action a `label` so it has a name there:

@@ -80,12 +80,14 @@ class _AdaptiveToolbarHostState extends State<AdaptiveToolbarHost>
   /// What the debug log last reported, to print only the changes.
   SystemVerticalBarEdge _loggedEdge = SystemVerticalBarEdge.unknown;
   DuoPose? _loggedPose;
+  DuoTopStrip? _loggedTopStrip;
 
   @override
   void initState() {
     super.initState();
     _blend = ToolbarBlend(registry: _registry, vsync: this);
-    // Fold readings are only needed for the camera clearance of the bar.
+    // Fold readings place the bars on iPhone Duo: the camera clearance of the
+    // vertical bar, and the top strip the top bar sits in.
     if (widget.debugFold == null && PlatformInfo.isIOS26OrHigher()) {
       Foldable.snapshot.then(_onFoldChanged).catchError((Object _) {});
       _foldSub = Foldable.changes.listen(
@@ -129,17 +131,30 @@ class _AdaptiveToolbarHostState extends State<AdaptiveToolbarHost>
         _edge?.value ??
         SystemVerticalBarEdge.unknown;
     // Resolved once: the bar, the title and the pages all read this decision.
-    final pose = hostsToolbar
-        ? DuoLayout.resolvePose(MediaQuery.viewPaddingOf(context), edge)
+    final viewPadding = MediaQuery.viewPaddingOf(context);
+    final pose = hostsToolbar ? DuoLayout.resolvePose(viewPadding, edge) : null;
+    // Where bars stay horizontal on a foldable, the top bar goes inside the
+    // hardware strip at the top rather than below it.
+    final topStrip = hostsToolbar
+        ? DuoLayout.resolveTopStrip(
+            viewPadding: viewPadding,
+            size: MediaQuery.sizeOf(context),
+            pose: pose,
+            fold: fold,
+            barHeight: kHostedToolbarHeight,
+          )
         : null;
     assert(() {
       // Pose bugs only reproduce on a Duo; this makes a report actionable.
-      if (edge != _loggedEdge || pose != _loggedPose) {
+      if (edge != _loggedEdge ||
+          pose != _loggedPose ||
+          topStrip != _loggedTopStrip) {
         _loggedEdge = edge;
         _loggedPose = pose;
+        _loggedTopStrip = topStrip;
         debugPrint(
           'AdaptiveToolbarHost: Duo pose ${pose ?? 'none'} '
-          '(edge: ${edge.name})',
+          '(edge: ${edge.name}, ${topStrip ?? 'no top strip'})',
         );
       }
       return true;
@@ -152,6 +167,7 @@ class _AdaptiveToolbarHostState extends State<AdaptiveToolbarHost>
         hostsDuoControls: pose != null,
         child: DuoPoseScope(
           pose: pose,
+          topStrip: topStrip,
           child: Stack(
             fit: StackFit.expand,
             children: [
@@ -167,6 +183,7 @@ class _AdaptiveToolbarHostState extends State<AdaptiveToolbarHost>
                 HostedTopToolbar(
                   blend: _blend,
                   titleOnly: pose != null,
+                  topStrip: topStrip,
                   coveredOpacity: widget.coveredOpacity,
                 ),
               if (pose != null)
