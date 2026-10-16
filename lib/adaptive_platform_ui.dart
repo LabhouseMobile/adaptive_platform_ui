@@ -42,7 +42,8 @@ export 'src/widgets/adaptive_app.dart';
 // Fixed toolbar chrome (installed automatically by AdaptiveApp; exported so
 // apps with their own MaterialApp/CupertinoApp can wrap their builder)
 export 'src/toolbar/adaptive_toolbar_host.dart';
-export 'src/toolbar/duo_vertical_bar.dart' show DuoPose, DuoPoseScope, DuoBarSide;
+export 'src/toolbar/duo_vertical_bar.dart'
+    show DuoPose, DuoPoseScope, DuoBarSide, DuoTopStrip;
 export 'src/toolbar/toolbar_registry.dart';
 export 'src/widgets/adaptive_app_bar.dart';
 export 'src/widgets/adaptive_bottom_navigation_bar.dart';

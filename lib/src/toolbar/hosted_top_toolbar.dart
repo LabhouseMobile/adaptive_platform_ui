@@ -81,6 +81,8 @@ class HostedTopToolbar extends StatelessWidget {
     super.key,
     required this.blend,
     this.titleOnly = false,
+    this.topStrip,
+    this.isFoldable = false,
     this.coveredOpacity = kToolbarCoveredOpacity,
   });
 
@@ -88,6 +90,16 @@ class HostedTopToolbar extends StatelessWidget {
 
   /// True on iPhone Duo, where the controls live in the vertical bar.
   final bool titleOnly;
+
+  /// On the iPhone Duo inner display in portrait, the hardware strip at the
+  /// top: the bar is drawn inside it, level with the clock and ending before
+  /// the status cluster, as the system draws its own. Null draws the bar
+  /// below the top inset.
+  final DuoTopStrip? topStrip;
+
+  /// Whether the device folds (iPhone Duo). A phone has no window controls,
+  /// so the back button never makes room for them there.
+  final bool isFoldable;
 
   /// Opacity of the toolbar while a dialog or sheet covers the page that owns
   /// it.
@@ -132,12 +144,29 @@ class HostedTopToolbar extends StatelessWidget {
       (true, true) => kAlwaysDismissedAnimation,
     };
 
+    // How far down the chrome reaches, and the slot the bar's 44 points of
+    // content take in it: the bottom of the reach below the top inset, or
+    // the strip's bar row beside the status cluster.
+    final strip = titleOnly ? null : topStrip;
+    final double height;
+    var slotTop = 0.0;
+    var slotRight = 0.0;
+    double? slotHeight;
+    if (titleOnly) {
+      height = kDuoTitleBandHeight;
+    } else if (strip != null) {
+      height = strip.height;
+      slotTop = strip.barTop;
+      slotRight = strip.trailingClearance;
+      slotHeight = kHostedToolbarHeight;
+    } else {
+      height = kHostedToolbarHeight + topInset;
+    }
+
     return Align(
       alignment: Alignment.topCenter,
       child: SizedBox(
-        height: titleOnly
-            ? kDuoTitleBandHeight
-            : kHostedToolbarHeight + topInset,
+        height: height,
         child: IgnorePointer(
           ignoring: blend.ownerIsCovered,
           child: FadeTransition(
@@ -153,35 +182,64 @@ class HostedTopToolbar extends StatelessWidget {
                   opacity: backdropOpacity,
                   child: titleOnly
                       ? const DuoTitleBackdrop()
-                      : const _Backdrop(),
+                      : _Backdrop(height: height),
                 ),
-                if (lowerEntry != null && !lower.isEmpty)
-                  _layer(
-                    key: ValueKey<Object>(lowerEntry.id),
-                    content: lower,
-                    opacity: lowerOpacity,
-                    interactive: !upperOwns,
-                  ),
-                if (upperEntry != null && !upper.isEmpty)
-                  _layer(
-                    key: ValueKey<Object>(upperEntry.id),
-                    content: upper,
-                    opacity: upperOpacity,
-                    interactive: upperOwns,
-                  ),
-                if (backOpacity != null)
-                  Positioned(
-                    key: const ValueKey<String>('adaptive_toolbar_back'),
-                    left: 16 + (_isWindowed(context) ? 62 : 0),
-                    bottom: 3,
-                    child: FadeTransition(
-                      key: const ValueKey<String>('adaptive_toolbar_back_fade'),
-                      opacity: backOpacity,
-                      child: _BackButton(
-                        navigator: (upperOwns ? upper : lower).navigator,
-                      ),
+                // The same widgets in every pose, so a rotation moves the
+                // native bars instead of rebuilding them.
+                Positioned(
+                  key: const ValueKey<String>('adaptive_toolbar_slot'),
+                  top: slotTop,
+                  left: 0,
+                  right: slotRight,
+                  height: slotHeight ?? height,
+                  // In the strip the bar is already clear of the top inset.
+                  child: MediaQuery.removePadding(
+                    context: context,
+                    removeTop: strip != null,
+                    child: Stack(
+                      fit: StackFit.expand,
+                      clipBehavior: Clip.none,
+                      children: [
+                        if (lowerEntry != null && !lower.isEmpty)
+                          _layer(
+                            key: ValueKey<Object>(lowerEntry.id),
+                            content: lower,
+                            opacity: lowerOpacity,
+                            interactive: !upperOwns,
+                            inStrip: strip != null,
+                          ),
+                        if (upperEntry != null && !upper.isEmpty)
+                          _layer(
+                            key: ValueKey<Object>(upperEntry.id),
+                            content: upper,
+                            opacity: upperOpacity,
+                            interactive: upperOwns,
+                            inStrip: strip != null,
+                          ),
+                        if (backOpacity != null)
+                          Positioned(
+                            key: const ValueKey<String>(
+                              'adaptive_toolbar_back',
+                            ),
+                            left:
+                                16 +
+                                (!isFoldable && _isWindowed(context) ? 62 : 0),
+                            bottom: 3,
+                            child: FadeTransition(
+                              key: const ValueKey<String>(
+                                'adaptive_toolbar_back_fade',
+                              ),
+                              opacity: backOpacity,
+                              child: _BackButton(
+                                navigator:
+                                    (upperOwns ? upper : lower).navigator,
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                   ),
+                ),
               ],
             ),
           ),
@@ -197,6 +255,7 @@ class HostedTopToolbar extends StatelessWidget {
     required TopToolbarContent content,
     required Animation<double> opacity,
     required bool interactive,
+    required bool inStrip,
   }) {
     return FadeTransition(
       key: key,
@@ -212,6 +271,9 @@ class HostedTopToolbar extends StatelessWidget {
               )
             : defaultTargetPlatform == TargetPlatform.iOS
             ? IOS26NativeToolbar(
+                // The safe area is read once, when the native view is made.
+                key: ValueKey<bool>(inStrip),
+                ignoresSafeArea: inStrip,
                 title: content.title,
                 titleWidget: content.titleOverlay,
                 leading: content.customLeading,
@@ -231,6 +293,10 @@ class HostedTopToolbar extends StatelessWidget {
 
   /// Whether the app runs in a window smaller than the display (iPadOS),
   /// where the system's window controls take the bar's leading corner.
+  ///
+  /// Only meaningful off iPhone Duo: there the display and the app's view
+  /// differ in size although there is no window to control, so the caller
+  /// skips it on a foldable.
   static bool _isWindowed(BuildContext context) {
     final display = View.of(context).display.size;
     final viewport =
@@ -242,7 +308,10 @@ class HostedTopToolbar extends StatelessWidget {
 
 /// The soft gradient that keeps the bar readable over scrolling content.
 class _Backdrop extends StatelessWidget {
-  const _Backdrop();
+  const _Backdrop({required this.height});
+
+  /// How far down the toolbar reaches; the gradient runs on below it.
+  final double height;
 
   @override
   Widget build(BuildContext context) {
@@ -255,10 +324,7 @@ class _Backdrop extends StatelessWidget {
         child: LayoutBuilder(
           builder: (context, constraints) => Container(
             // Runs on below the bar for a smooth fade into the content.
-            height:
-                MediaQuery.viewPaddingOf(context).top +
-                kHostedToolbarHeight +
-                30,
+            height: height + 30,
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topCenter,

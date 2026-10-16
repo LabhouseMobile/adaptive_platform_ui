@@ -88,7 +88,10 @@ class iOS26ToolbarPlatformView: NSObject, FlutterPlatformView {
         if showsGradient {
             setupGradient()
         }
-        setupNavigationBar()
+        // A bar placed inside the top safe-area inset (the iPhone Duo top
+        // strip) must not be pushed down by it.
+        let ignoresSafeArea = (args as? [String: Any])?["ignoresSafeArea"] as? Bool ?? false
+        setupNavigationBar(ignoresSafeArea: ignoresSafeArea)
 
         if let params = args as? [String: Any] {
             configureItems(params)
@@ -130,7 +133,7 @@ class iOS26ToolbarPlatformView: NSObject, FlutterPlatformView {
         updateGradientColors()
     }
 
-    private func setupNavigationBar() {
+    private func setupNavigationBar(ignoresSafeArea: Bool) {
         containerView.backgroundColor = .clear
 
         // Make navigation bar transparent to show gradient behind
@@ -153,7 +156,10 @@ class iOS26ToolbarPlatformView: NSObject, FlutterPlatformView {
         containerView.addSubview(navigationBar)
 
         NSLayoutConstraint.activate([
-            navigationBar.topAnchor.constraint(equalTo: containerView.safeAreaLayoutGuide.topAnchor),
+            navigationBar.topAnchor.constraint(
+                equalTo: ignoresSafeArea
+                    ? containerView.topAnchor
+                    : containerView.safeAreaLayoutGuide.topAnchor),
             navigationBar.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
             navigationBar.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
             navigationBar.bottomAnchor.constraint(equalTo: containerView.bottomAnchor)

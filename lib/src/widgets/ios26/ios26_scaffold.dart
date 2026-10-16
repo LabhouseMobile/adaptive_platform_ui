@@ -345,7 +345,12 @@ class _IOS26ScaffoldState extends State<IOS26Scaffold>
         ? mq.padding.left
         : mq.padding.right;
     if (showTopToolbar || trailingInset > 0) {
-      final topInset = !showTopToolbar
+      // Under a host that draws the bar inside the iPhone Duo top strip, the
+      // bar takes no room below the top inset: the strip already holds it.
+      final barInStrip =
+          (chrome?.hostsToolbar ?? false) &&
+          DuoPoseScope.topStripOf(context) != null;
+      final topInset = !showTopToolbar || barInStrip
           ? 0.0
           : duoVerticalPose
           ? kDuoTitleBandHeight
