@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
 
 /// Spacer type for toolbar items (iOS 26+ only)
@@ -29,6 +30,7 @@ class AdaptiveAppBarAction {
     this.spacerAfter = ToolbarSpacerType.none,
     this.prominent = false,
     this.tintColor,
+    this.menu,
   }) : assert(
          iosSymbol != null ||
              icon != null ||
@@ -102,6 +104,12 @@ class AdaptiveAppBarAction {
   /// - iOS <26 / Android: Ignored
   final Color? tintColor;
 
+  /// Actions to show in a native menu when this action is tapped, instead of
+  /// calling [onPressed] (iOS 26+ only). Each entry shows its [effectiveLabel]
+  /// and [iosSymbol], and choosing it calls its own [onPressed]. The top
+  /// toolbar uses it for the actions that do not fit (`fitTopToolbarActions`).
+  final List<AdaptiveAppBarAction>? menu;
+
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
@@ -112,7 +120,8 @@ class AdaptiveAppBarAction {
         other.title == title &&
         other.label == label &&
         other.prominent == prominent &&
-        other.tintColor == tintColor;
+        other.tintColor == tintColor &&
+        listEquals(other.menu, menu);
   }
 
   @override
@@ -124,6 +133,7 @@ class AdaptiveAppBarAction {
     label,
     prominent,
     tintColor,
+    menu == null ? null : Object.hashAll(menu!),
   );
 
   /// Convert action to map for native platform channel (iOS 26+ only)
@@ -135,6 +145,14 @@ class AdaptiveAppBarAction {
       'spacerAfter': spacerAfter.index, // 0=none, 1=fixed, 2=flexible
       if (prominent) 'prominent': true,
       if (tintColor != null) 'tint': tintColor!.toARGB32(),
+      if (menu != null)
+        'menu': [
+          for (final entry in menu!)
+            {
+              'title': entry.effectiveLabel ?? '',
+              if (entry.iosSymbol != null) 'icon': entry.iosSymbol!,
+            },
+        ],
     };
   }
 }

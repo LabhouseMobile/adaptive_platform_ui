@@ -16,6 +16,7 @@ class IOS26NativeToolbar extends StatefulWidget {
     this.actions,
     this.onLeadingTap,
     this.onActionTap,
+    this.onMenuActionTap,
     this.titleWidget,
     this.tintColor,
     this.height = 44.0,
@@ -30,6 +31,10 @@ class IOS26NativeToolbar extends StatefulWidget {
   final List<AdaptiveAppBarAction>? actions;
   final VoidCallback? onLeadingTap;
   final ValueChanged<int>? onActionTap;
+
+  /// Called with the index of the action and of the entry chosen in that
+  /// action's [AdaptiveAppBarAction.menu].
+  final void Function(int actionIndex, int entryIndex)? onMenuActionTap;
 
   /// Custom widget overlaid at the title position.
   /// When set, the native title is hidden and this widget is centered instead.
@@ -235,6 +240,16 @@ class _IOS26NativeToolbarState extends State<IOS26NativeToolbar> {
         if (call.arguments is Map) {
           final index = (call.arguments as Map)['index'] as int?;
           if (index != null) widget.onActionTap?.call(index);
+        }
+        break;
+      case 'onMenuActionTapped':
+        if (call.arguments is Map) {
+          final args = call.arguments as Map;
+          final index = args['index'] as int?;
+          final entry = args['entry'] as int?;
+          if (index != null && entry != null) {
+            widget.onMenuActionTap?.call(index, entry);
+          }
         }
         break;
     }

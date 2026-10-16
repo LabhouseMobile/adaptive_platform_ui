@@ -1,10 +1,15 @@
 # Changelog
 
+## [1.0.1-lh4]
+* **NEW**: `menu` on `AdaptiveAppBarAction`: tapping the action opens those actions in a native menu (iOS 26+), each with its `label` and `iosSymbol`
+* **NEW**: The top toolbar and the iPhone Duo vertical bar show at most three items (`kMaxToolbarActions`). Past that they show the first two and an ellipsis (`ellipsis.circle`) whose native menu holds the rest, in order. The vertical bar still moves items into that menu sooner when the strip runs out of room. With three items or fewer nothing changes
+
 ## [1.0.1-lh3]
 * **FIX**: iPhone Duo: on the inner display in portrait the top toolbar now sits inside the hardware strip at the top, level with the clock and ending before the status cluster, as the system draws its own bar. It used to sit below the whole strip, leaving an empty band above it and pushing every page 44 points further down. The page body now starts right below the strip. Measured against Safari on the iOS 27.1 simulator
 * **FIX**: iPhone Duo: the fixed toolbar's back button sat 62 points in from the leading edge, making room for iPad window controls. The Duo's display and app view differ in size, which read as a window; a foldable is never treated as windowed now
 * **NEW**: `DuoTopStrip` and `DuoPoseScope.topStripOf` tell pages and wrappers that publish to the host whether the top bar is in the strip, and so takes no room below the top inset
 * **NEW**: `IOS26NativeToolbar.ignoresSafeArea`, for a native bar placed inside the top safe-area inset
+
 ## [1.0.1-lh2]
 * **NEW**: `coveredOpacity` and `duoBarCoveredOpacity` on `AdaptiveToolbarHost` set how far the top toolbar and the iPhone Duo vertical bar dim while a dialog or sheet covers the page (default 0.45, as before). Native sheets are presented over the Duo's vertical bar, so apps can now hide it with `duoBarCoveredOpacity: 0`. The chrome is inert while covered either way
 

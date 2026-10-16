@@ -12,6 +12,28 @@ import 'toolbar_registry.dart';
 /// Height of the toolbar's content area, excluding the status bar.
 const double kHostedToolbarHeight = 44.0;
 
+/// The actions the top toolbar shows: all of them if they fit in [max],
+/// otherwise the first `max - 1` and an ellipsis whose native menu holds the
+/// rest, in their order. The iPhone Duo vertical bar does the same with the
+/// items that do not fit in it.
+List<AdaptiveAppBarAction> fitTopToolbarActions(
+  List<AdaptiveAppBarAction> actions, {
+  int max = kMaxToolbarActions,
+}) {
+  assert(max >= 1, 'max must leave room for the overflow menu');
+  if (actions.length <= max) return actions;
+  return [
+    ...actions.take(max - 1),
+    AdaptiveAppBarAction(
+      iosSymbol: 'ellipsis.circle',
+      icon: CupertinoIcons.ellipsis,
+      label: 'More',
+      onPressed: () {},
+      menu: actions.skip(max - 1).toList(),
+    ),
+  ];
+}
+
 /// What one page contributes to the top toolbar.
 @immutable
 class TopToolbarContent {
@@ -257,6 +279,7 @@ class HostedTopToolbar extends StatelessWidget {
     required bool interactive,
     required bool inStrip,
   }) {
+    final actions = fitTopToolbarActions(content.actions);
     return FadeTransition(
       key: key,
       opacity: opacity,
@@ -277,16 +300,23 @@ class HostedTopToolbar extends StatelessWidget {
                 title: content.title,
                 titleWidget: content.titleOverlay,
                 leading: content.customLeading,
-                actions: content.actions,
+                actions: actions,
                 tintColor: content.tint,
                 showsGradient: false,
                 onActionTap: (index) {
-                  if (index >= 0 && index < content.actions.length) {
-                    content.actions[index].onPressed();
+                  if (index >= 0 && index < actions.length) {
+                    actions[index].onPressed();
+                  }
+                },
+                onMenuActionTap: (index, entry) {
+                  if (index < 0 || index >= actions.length) return;
+                  final menu = actions[index].menu;
+                  if (menu != null && entry >= 0 && entry < menu.length) {
+                    menu[entry].onPressed();
                   }
                 },
               )
-            : _FallbackBar(content: content),
+            : _FallbackBar(content: content, actions: actions),
       ),
     );
   }
@@ -367,9 +397,12 @@ class _BackButton extends StatelessWidget {
 
 /// Stand-in for the native bar where there is no UIKit (widget tests).
 class _FallbackBar extends StatelessWidget {
-  const _FallbackBar({required this.content});
+  const _FallbackBar({required this.content, required this.actions});
 
   final TopToolbarContent content;
+
+  /// [content]'s actions as the bar shows them ([fitTopToolbarActions]).
+  final List<AdaptiveAppBarAction> actions;
 
   @override
   Widget build(BuildContext context) {
@@ -387,7 +420,7 @@ class _FallbackBar extends StatelessWidget {
                     (content.title != null ? Text(content.title!) : null),
               ),
             ),
-            for (final action in content.actions)
+            for (final action in actions)
               CupertinoButton(
                 padding: EdgeInsets.zero,
                 onPressed: action.onPressed,
