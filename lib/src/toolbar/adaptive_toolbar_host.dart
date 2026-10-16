@@ -184,6 +184,7 @@ class _AdaptiveToolbarHostState extends State<AdaptiveToolbarHost>
                   blend: _blend,
                   titleOnly: pose != null,
                   topStrip: topStrip,
+                  isFoldable: fold?.isFoldable ?? false,
                   coveredOpacity: widget.coveredOpacity,
                 ),
               if (pose != null)

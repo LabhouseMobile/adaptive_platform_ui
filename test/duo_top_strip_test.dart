@@ -231,6 +231,30 @@ void main() {
 
       expect(padding!.top, duoStripHeight);
     });
+
+    testWidgets('puts the back button at the leading margin', (tester) async {
+      // The test view's display is not the size of the window, which is what
+      // made the back button leave room for iPad window controls on the Duo.
+      useWindow(tester, duoPortrait, top: duoStripHeight);
+      expect(
+        tester.view.display.size,
+        isNot(duoPortrait * tester.view.devicePixelRatio),
+      );
+      final nav = GlobalKey<NavigatorState>();
+      await tester.pumpWidget(
+        hostedApp(data: fold(), navigatorKey: nav, home: page('Home')),
+      );
+      nav.currentState!.push(
+        MaterialPageRoute<void>(builder: (_) => page('Detail')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(tester.getTopLeft(back).dx, 16);
+      expect(
+        tester.getRect(back).center.dy,
+        closeTo(kDuoTopBarTop + kHostedToolbarHeight / 2, 3),
+      );
+    });
   });
 
   group('other devices keep the bar below the top inset', () {
@@ -250,6 +274,25 @@ void main() {
         const Rect.fromLTWH(0, 0, 402, 62 + kHostedToolbarHeight),
       );
       expect(padding!.top, 62 + kHostedToolbarHeight);
+    });
+
+    testWidgets('a window smaller than the display keeps the window controls '
+        'clear', (tester) async {
+      useWindow(tester, const Size(700, 900), top: 24);
+      final nav = GlobalKey<NavigatorState>();
+      await tester.pumpWidget(
+        hostedApp(
+          data: fold(isFoldable: false),
+          navigatorKey: nav,
+          home: page('Home'),
+        ),
+      );
+      nav.currentState!.push(
+        MaterialPageRoute<void>(builder: (_) => page('Detail')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(tester.getTopLeft(back).dx, 16 + 62);
     });
   });
 }

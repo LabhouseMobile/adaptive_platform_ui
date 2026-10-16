@@ -82,6 +82,7 @@ class HostedTopToolbar extends StatelessWidget {
     required this.blend,
     this.titleOnly = false,
     this.topStrip,
+    this.isFoldable = false,
     this.coveredOpacity = kToolbarCoveredOpacity,
   });
 
@@ -95,6 +96,10 @@ class HostedTopToolbar extends StatelessWidget {
   /// the status cluster, as the system draws its own. Null draws the bar
   /// below the top inset.
   final DuoTopStrip? topStrip;
+
+  /// Whether the device folds (iPhone Duo). A phone has no window controls,
+  /// so the back button never makes room for them there.
+  final bool isFoldable;
 
   /// Opacity of the toolbar while a dialog or sheet covers the page that owns
   /// it.
@@ -216,7 +221,9 @@ class HostedTopToolbar extends StatelessWidget {
                             key: const ValueKey<String>(
                               'adaptive_toolbar_back',
                             ),
-                            left: 16 + (_isWindowed(context) ? 62 : 0),
+                            left:
+                                16 +
+                                (!isFoldable && _isWindowed(context) ? 62 : 0),
                             bottom: 3,
                             child: FadeTransition(
                               key: const ValueKey<String>(
@@ -286,6 +293,10 @@ class HostedTopToolbar extends StatelessWidget {
 
   /// Whether the app runs in a window smaller than the display (iPadOS),
   /// where the system's window controls take the bar's leading corner.
+  ///
+  /// Only meaningful off iPhone Duo: there the display and the app's view
+  /// differ in size although there is no window to control, so the caller
+  /// skips it on a foldable.
   static bool _isWindowed(BuildContext context) {
     final display = View.of(context).display.size;
     final viewport =
