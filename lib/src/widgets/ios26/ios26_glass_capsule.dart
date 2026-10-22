@@ -116,6 +116,7 @@ class GlassCapsuleItem {
             'id': entry.id,
             'title': entry.title,
             if (entry.symbol != null) 'symbol': entry.symbol,
+            if (entry.isDestructive) 'destructive': true,
           },
       ],
   };
@@ -128,12 +129,16 @@ class GlassCapsuleMenuEntry {
     required this.id,
     required this.title,
     this.symbol,
+    this.isDestructive = false,
   });
 
   /// Reported back through [IOS26GlassCapsule.onMenuTap].
   final int id;
   final String title;
   final String? symbol;
+
+  /// Shown in red by the native menu.
+  final bool isDestructive;
 }
 
 /// A vertical Liquid Glass capsule holding a column of icon buttons: the

@@ -433,6 +433,7 @@ void main() {
                         icon: icon,
                         iosSymbol: 'symbol.$icon',
                         label: icon == Icons.delete ? 'Delete' : null,
+                        isDestructive: icon == Icons.delete,
                         onPressed: () {},
                         spacerAfter: ToolbarSpacerType.fixed,
                       ),
@@ -457,6 +458,17 @@ void main() {
           .firstWhere((c) => c.items.single.menu != null);
       expect(overflow.items.single.menu!.map((e) => e.title), ['', 'Delete']);
       expect(overflow.items.single.menu!.last.symbol, isNotNull);
+
+      // A destructive action stays destructive in the menu, and reaches the
+      // native capsule's creation params.
+      expect(overflow.items.single.menu!.map((e) => e.isDestructive), [
+        false,
+        true,
+      ]);
+      final sent = (overflow.items.single.toNativeMap()['menu']! as List)
+          .cast<Map<String, dynamic>>();
+      expect(sent.first.containsKey('destructive'), isFalse);
+      expect(sent.last['destructive'], isTrue);
     });
 
     testWidgets('with room for all, at most three controls show', (

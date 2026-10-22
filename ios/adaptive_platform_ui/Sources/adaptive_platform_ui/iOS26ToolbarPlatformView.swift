@@ -227,9 +227,11 @@ class iOS26ToolbarPlatformView: NSObject, FlutterPlatformView {
                     // The overflow control: tapping it opens a native menu.
                     let menu = UIMenu(children: entries.enumerated().map { entryIndex, entry in
                         let symbol = entry["icon"] as? String
+                        let destructive = (entry["destructive"] as? Bool) ?? false
                         return UIAction(
                             title: entry["title"] as? String ?? "",
-                            image: symbol.flatMap { UIImage(systemName: $0) ?? UIImage(named: $0) }
+                            image: symbol.flatMap { UIImage(systemName: $0) ?? UIImage(named: $0) },
+                            attributes: destructive ? .destructive : []
                         ) { [weak self] _ in
                             self?.channel.invokeMethod(
                                 "onMenuActionTapped",

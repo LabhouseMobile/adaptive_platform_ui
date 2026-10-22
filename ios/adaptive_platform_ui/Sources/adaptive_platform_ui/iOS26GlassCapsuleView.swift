@@ -182,12 +182,20 @@ class iOS26GlassCapsuleView: NSObject, FlutterPlatformView {
             if let entries = item["menu"] as? [[String: Any]] {
                 // The overflow control: a menu of the items that did not fit.
                 button.showsMenuAsPrimaryAction = true
+                if #available(iOS 16.0, *) {
+                    // Keep the given order; with .automatic UIKit reverses the
+                    // menu depending on where the button sits (the Duo's cover
+                    // display versus its open display).
+                    button.preferredMenuElementOrder = .fixed
+                }
                 button.menu = UIMenu(children: entries.map { entry in
                     let id = (entry["id"] as? NSNumber)?.intValue ?? -1
                     let symbol = entry["symbol"] as? String
+                    let destructive = (entry["destructive"] as? Bool) ?? false
                     return UIAction(
                         title: entry["title"] as? String ?? "",
-                        image: symbol.flatMap { UIImage(systemName: $0) ?? UIImage(named: $0) }
+                        image: symbol.flatMap { UIImage(systemName: $0) ?? UIImage(named: $0) },
+                        attributes: destructive ? .destructive : []
                     ) { [weak self] _ in
                         self?.channel.invokeMethod("onMenuItemTapped", arguments: ["id": id])
                     }

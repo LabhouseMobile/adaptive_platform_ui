@@ -322,6 +322,8 @@ void main() {
           iosSymbol: 'circle',
           icon: icon,
           label: 'action $i',
+          // The last one is the destructive one, like a delete.
+          isDestructive: icon == Icons.delete,
           onPressed: () => pressed.add('action $i'),
         ),
     ];
@@ -378,7 +380,7 @@ void main() {
       expect(native.last['menu'], [
         {'title': 'action 2', 'icon': 'circle'},
         {'title': 'action 3', 'icon': 'circle'},
-        {'title': 'action 4', 'icon': 'circle'},
+        {'title': 'action 4', 'icon': 'circle', 'destructive': true},
       ]);
 
       await messenger.handlePlatformMessage(

@@ -31,6 +31,7 @@ class AdaptiveAppBarAction {
     this.prominent = false,
     this.tintColor,
     this.menu,
+    this.isDestructive = false,
   }) : assert(
          iosSymbol != null ||
              icon != null ||
@@ -110,6 +111,12 @@ class AdaptiveAppBarAction {
   /// toolbar uses it for the actions that do not fit (`fitTopToolbarActions`).
   final List<AdaptiveAppBarAction>? menu;
 
+  /// Whether the action is destructive, such as "Delete". Where the action
+  /// ends up as an entry of a native menu (the overflow menu of the top
+  /// toolbar and of the iPhone Duo vertical bar) it is shown in red.
+  /// - Elsewhere (a toolbar button, iOS <26, Android): Ignored
+  final bool isDestructive;
+
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
@@ -121,6 +128,7 @@ class AdaptiveAppBarAction {
         other.label == label &&
         other.prominent == prominent &&
         other.tintColor == tintColor &&
+        other.isDestructive == isDestructive &&
         listEquals(other.menu, menu);
   }
 
@@ -133,6 +141,7 @@ class AdaptiveAppBarAction {
     label,
     prominent,
     tintColor,
+    isDestructive,
     menu == null ? null : Object.hashAll(menu!),
   );
 
@@ -151,6 +160,7 @@ class AdaptiveAppBarAction {
             {
               'title': entry.effectiveLabel ?? '',
               if (entry.iosSymbol != null) 'icon': entry.iosSymbol!,
+              if (entry.isDestructive) 'destructive': true,
             },
         ],
     };
