@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.1-lh5]
+* **FIX**: iPhone Duo: the overflow menu of the vertical bar now always lists its items in the given order, as the top toolbar's menu does. UIKit reversed it depending on where the button sat (on the cover display, but not on the open display)
+* **NEW**: `isDestructive` on `AdaptiveAppBarAction`: where the action ends up as an entry of a native menu (the overflow menu of the top toolbar and of the iPhone Duo vertical bar) it is shown in red. Ignored elsewhere
+
 ## [1.0.1-lh4]
 * **NEW**: `menu` on `AdaptiveAppBarAction`: tapping the action opens those actions in a native menu (iOS 26+), each with its `label` and `iosSymbol`
 * **NEW**: The top toolbar and the iPhone Duo vertical bar show at most three items (`kMaxToolbarActions`). Past that they show the first two and an ellipsis (`ellipsis.circle`) whose native menu holds the rest, in order. The vertical bar still moves items into that menu sooner when the strip runs out of room. With three items or fewer nothing changes

@@ -258,6 +258,40 @@ void main() {
       },
     );
 
+    test('isDestructive defaults to false and takes part in equality', () {
+      final plain = AdaptiveAppBarAction(iosSymbol: 'trash', onPressed: () {});
+      final destructive = AdaptiveAppBarAction(
+        iosSymbol: 'trash',
+        isDestructive: true,
+        onPressed: () {},
+      );
+
+      expect(plain.isDestructive, isFalse);
+      expect(destructive.isDestructive, isTrue);
+      expect(plain, isNot(destructive));
+    });
+
+    test('toNativeMap marks destructive menu entries only', () {
+      final action = AdaptiveAppBarAction(
+        iosSymbol: 'ellipsis',
+        onPressed: () {},
+        menu: [
+          AdaptiveAppBarAction(title: 'Rename', onPressed: () {}),
+          AdaptiveAppBarAction(
+            label: 'Delete',
+            iosSymbol: 'trash',
+            isDestructive: true,
+            onPressed: () {},
+          ),
+        ],
+      );
+
+      expect(action.toNativeMap()['menu'], [
+        {'title': 'Rename'},
+        {'title': 'Delete', 'icon': 'trash', 'destructive': true},
+      ]);
+    });
+
     test('toNativeMap has no menu when there is none', () {
       final action = AdaptiveAppBarAction(iosSymbol: 'heart', onPressed: () {});
 

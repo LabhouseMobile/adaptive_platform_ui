@@ -239,6 +239,9 @@ AdaptiveAppBarAction(
 
   Unlike `title`, a `label` never replaces the icon with text.
 
+  Mark an action `isDestructive: true` (a delete, say) and it shows in red
+  where it lands in the overflow menu.
+
 Not using `AdaptiveApp`? Install the host yourself, around the navigator
 (see [Migrating to 1.0.0](#migrating-to-100)):
 

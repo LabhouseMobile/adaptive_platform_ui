@@ -638,6 +638,7 @@ class _OverflowCapsule extends StatelessWidget {
                   // symbol's identifier is not something to show a person.
                   title: actions[i].effectiveLabel ?? '',
                   symbol: actions[i].iosSymbol,
+                  isDestructive: actions[i].isDestructive,
                 ),
             ],
           ),
