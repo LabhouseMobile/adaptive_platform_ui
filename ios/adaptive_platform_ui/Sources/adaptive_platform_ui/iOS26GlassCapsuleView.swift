@@ -1,7 +1,7 @@
 import UIKit
 import Flutter
 
-// A vertical Liquid Glass capsule holding a column of icon buttons. It is the
+// A Liquid Glass capsule holding a column (or row) of icon buttons. It is the
 // building block of the iPhone Duo trailing bar, where the system shows each
 // group of toolbar items, and the tab bar, as one glass capsule.
 
@@ -58,6 +58,9 @@ class iOS26GlassCapsuleView: NSObject, FlutterPlatformView {
     private var inset: CGFloat = 0
     private var stackTop: NSLayoutConstraint?
     private var stackBottom: NSLayoutConstraint?
+    private var stackLeading: NSLayoutConstraint?
+    private var stackTrailing: NSLayoutConstraint?
+    private var horizontal = false
     private var imageCache: [String: UIImage] = [:]
 
     init(
@@ -99,15 +102,19 @@ class iOS26GlassCapsuleView: NSObject, FlutterPlatformView {
 
         let top = stack.topAnchor.constraint(equalTo: effectView.contentView.topAnchor)
         let bottom = stack.bottomAnchor.constraint(equalTo: effectView.contentView.bottomAnchor)
+        let leading = stack.leadingAnchor.constraint(equalTo: effectView.contentView.leadingAnchor)
+        let trailing = stack.trailingAnchor.constraint(equalTo: effectView.contentView.trailingAnchor)
         stackTop = top
         stackBottom = bottom
+        stackLeading = leading
+        stackTrailing = trailing
         NSLayoutConstraint.activate([
             effectView.topAnchor.constraint(equalTo: container.topAnchor),
             effectView.bottomAnchor.constraint(equalTo: container.bottomAnchor),
             effectView.leadingAnchor.constraint(equalTo: container.leadingAnchor),
             effectView.trailingAnchor.constraint(equalTo: container.trailingAnchor),
-            stack.leadingAnchor.constraint(equalTo: effectView.contentView.leadingAnchor),
-            stack.trailingAnchor.constraint(equalTo: effectView.contentView.trailingAnchor),
+            leading,
+            trailing,
             top,
             bottom,
         ])
@@ -145,11 +152,18 @@ class iOS26GlassCapsuleView: NSObject, FlutterPlatformView {
         } else if params.keys.contains("items") {
             tint = nil
         }
+        if params.keys.contains("items") {
+            horizontal = (params["axis"] as? String) == "horizontal"
+            stack.axis = horizontal ? .horizontal : .vertical
+        }
         if let value = params["inset"] as? NSNumber {
             inset = CGFloat(truncating: value)
-            stackTop?.constant = inset
-            stackBottom?.constant = -inset
         }
+        // The inset applies along the main axis only.
+        stackTop?.constant = horizontal ? 0 : inset
+        stackBottom?.constant = horizontal ? 0 : -inset
+        stackLeading?.constant = horizontal ? inset : 0
+        stackTrailing?.constant = horizontal ? -inset : 0
 
         let newSelected = (params["selectedIndex"] as? NSNumber)?.intValue
         let selectionChanged = newSelected != selectedIndex
@@ -321,13 +335,14 @@ class iOS26GlassCapsuleView: NSObject, FlutterPlatformView {
 
     private var selectionConstraints: [NSLayoutConstraint] = []
     private weak var selectionAnchor: UIButton?
+    private var selectionHorizontal = false
 
     private func layoutChrome(animated: Bool) {
-        let width = container.bounds.width
-        if width > 0 {
-            effectView.layer.cornerRadius = width / 2
+        let side = horizontal ? container.bounds.height : container.bounds.width
+        if side > 0 {
+            effectView.layer.cornerRadius = side / 2
             effectView.layer.cornerCurve = .continuous
-            selectionView.layer.cornerRadius = (width - 6) / 2
+            selectionView.layer.cornerRadius = (side - 6) / 2
             selectionView.layer.cornerCurve = .continuous
         }
 
@@ -336,7 +351,8 @@ class iOS26GlassCapsuleView: NSObject, FlutterPlatformView {
             return
         }
         let button = buttons[selected]
-        guard selectionAnchor !== button else { return }
+        guard selectionAnchor !== button || selectionHorizontal != horizontal else { return }
+        selectionHorizontal = horizontal
         let wasVisible = !selectionView.isHidden && selectionAnchor != nil
         selectionAnchor = button
 
@@ -347,8 +363,12 @@ class iOS26GlassCapsuleView: NSObject, FlutterPlatformView {
         selectionConstraints = [
             selectionView.centerXAnchor.constraint(equalTo: button.centerXAnchor),
             selectionView.centerYAnchor.constraint(equalTo: button.centerYAnchor),
-            selectionView.widthAnchor.constraint(equalTo: button.widthAnchor, constant: -6),
-            selectionView.heightAnchor.constraint(equalTo: button.heightAnchor),
+            horizontal
+                ? selectionView.widthAnchor.constraint(equalTo: button.widthAnchor)
+                : selectionView.widthAnchor.constraint(equalTo: button.widthAnchor, constant: -6),
+            horizontal
+                ? selectionView.heightAnchor.constraint(equalTo: button.heightAnchor, constant: -6)
+                : selectionView.heightAnchor.constraint(equalTo: button.heightAnchor),
         ]
         NSLayoutConstraint.activate(selectionConstraints)
         selectionView.isHidden = false

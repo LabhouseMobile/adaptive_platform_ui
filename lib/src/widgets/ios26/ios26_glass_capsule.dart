@@ -141,7 +141,8 @@ class GlassCapsuleMenuEntry {
   final bool isDestructive;
 }
 
-/// A vertical Liquid Glass capsule holding a column of icon buttons: the
+/// A Liquid Glass capsule holding a column (or, with [axis], a row) of icon
+/// buttons: the
 /// shape the system gives each group of toolbar items, and the tab bar, in
 /// the trailing bar of iPhone Duo. With a [selectedIndex] it behaves as a
 /// tab bar and highlights that item.
@@ -154,6 +155,7 @@ class IOS26GlassCapsule extends StatefulWidget {
     this.selectedIndex,
     this.inset = 0,
     this.tint,
+    this.axis = Axis.vertical,
   });
 
   final List<GlassCapsuleItem> items;
@@ -169,9 +171,21 @@ class IOS26GlassCapsule extends StatefulWidget {
   /// Tint of a selected tab, or of every item when there is no selection.
   final Color? tint;
 
+  /// Direction the items are laid out in. [Axis.vertical] is a column (the
+  /// Duo trailing bar); [Axis.horizontal] is a pill whose height is
+  /// [height] and whose width grows with the item count ([actionsWidth]).
+  /// [inset] then applies to the leading and trailing ends.
+  final Axis axis;
+
   /// Width of every control in the trailing bar, as measured on the system's
   /// own bar.
   static const double width = 48;
+
+  /// Height of a horizontal capsule: the size of one control.
+  static const double height = 48;
+
+  /// Width of a horizontal capsule of [count] toolbar items.
+  static double actionsWidth(int count) => 48.0 + (count - 1) * 52.0;
 
   /// Height of a capsule of [count] toolbar items.
   static double actionsHeight(int count) => 48.0 + (count - 1) * 52.0;
@@ -199,6 +213,7 @@ class _IOS26GlassCapsuleState extends State<IOS26GlassCapsule> {
       'items': widget.items.map((i) => i.toNativeMap()).toList(),
       if (widget.selectedIndex != null) 'selectedIndex': widget.selectedIndex,
       'inset': widget.inset,
+      if (widget.axis == Axis.horizontal) 'axis': 'horizontal',
       'isDark': _isDark,
       if (tint != null) 'tint': tint.toARGB32(),
     };
@@ -273,28 +288,30 @@ class _IOS26GlassCapsuleState extends State<IOS26GlassCapsule> {
     // nothing the native side can draw. The glass and the button stay native;
     // the icon is laid over its cell and lets touches through.
     final label = CupertinoColors.label.resolveFrom(context);
+    final horizontal = widget.axis == Axis.horizontal;
+    final cells = [
+      for (final item in widget.items)
+        Expanded(
+          child: Center(
+            child: item.canShowNatively
+                ? null
+                : IconTheme.merge(
+                    data: IconThemeData(color: item.tint ?? label),
+                    child: item.fallback ?? const SizedBox.shrink(),
+                  ),
+          ),
+        ),
+    ];
     return Stack(
       fit: StackFit.expand,
       children: [
         glass,
         IgnorePointer(
           child: Padding(
-            padding: EdgeInsets.symmetric(vertical: widget.inset),
-            child: Column(
-              children: [
-                for (final item in widget.items)
-                  Expanded(
-                    child: Center(
-                      child: item.canShowNatively
-                          ? null
-                          : IconTheme.merge(
-                              data: IconThemeData(color: item.tint ?? label),
-                              child: item.fallback ?? const SizedBox.shrink(),
-                            ),
-                    ),
-                  ),
-              ],
-            ),
+            padding: horizontal
+                ? EdgeInsets.symmetric(horizontal: widget.inset)
+                : EdgeInsets.symmetric(vertical: widget.inset),
+            child: horizontal ? Row(children: cells) : Column(children: cells),
           ),
         ),
       ],
@@ -304,41 +321,43 @@ class _IOS26GlassCapsuleState extends State<IOS26GlassCapsule> {
   Widget _buildFallback() {
     final label = CupertinoColors.label.resolveFrom(context);
     final tint = widget.tint ?? CupertinoTheme.of(context).primaryColor;
+    final horizontal = widget.axis == Axis.horizontal;
+    final cells = [
+      for (var i = 0; i < widget.items.length; i++)
+        Expanded(
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => widget.onTap(i),
+            child: Center(
+              child: IconTheme.merge(
+                data: IconThemeData(
+                  color: i == widget.selectedIndex ? tint : label,
+                ),
+                child:
+                    widget.items[i].fallback ??
+                    Text(
+                      widget.items[i].title ??
+                          widget.items[i].symbol ??
+                          widget.items[i].label ??
+                          '',
+                      style: TextStyle(fontSize: 10, color: label),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+              ),
+            ),
+          ),
+        ),
+    ];
     return DecoratedBox(
       decoration: BoxDecoration(
         color: CupertinoColors.systemFill.resolveFrom(context),
         borderRadius: BorderRadius.circular(IOS26GlassCapsule.width / 2),
       ),
       child: Padding(
-        padding: EdgeInsets.symmetric(vertical: widget.inset),
-        child: Column(
-          children: [
-            for (var i = 0; i < widget.items.length; i++)
-              Expanded(
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () => widget.onTap(i),
-                  child: Center(
-                    child: IconTheme.merge(
-                      data: IconThemeData(
-                        color: i == widget.selectedIndex ? tint : label,
-                      ),
-                      child:
-                          widget.items[i].fallback ??
-                          Text(
-                            widget.items[i].title ??
-                                widget.items[i].symbol ??
-                                widget.items[i].label ??
-                                '',
-                            style: TextStyle(fontSize: 10, color: label),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                    ),
-                  ),
-                ),
-              ),
-          ],
-        ),
+        padding: horizontal
+            ? EdgeInsets.symmetric(horizontal: widget.inset)
+            : EdgeInsets.symmetric(vertical: widget.inset),
+        child: horizontal ? Row(children: cells) : Column(children: cells),
       ),
     );
   }
