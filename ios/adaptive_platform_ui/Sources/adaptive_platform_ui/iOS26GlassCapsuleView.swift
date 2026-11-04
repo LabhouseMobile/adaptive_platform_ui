@@ -131,6 +131,10 @@ class iOS26GlassCapsuleView: NSObject, FlutterPlatformView {
     private var horizontal = false
     private var imageCache: [String: UIImage] = [:]
     private var widthConstraints: [NSLayoutConstraint] = []
+    /// Point size and weight of every symbol. 17 / medium unless the
+    /// creation params say otherwise.
+    private var symbolPointSize: CGFloat = 17
+    private var symbolImageWeight: UIImage.SymbolWeight = .medium
 
     init(
         frame: CGRect,
@@ -233,6 +237,17 @@ class iOS26GlassCapsuleView: NSObject, FlutterPlatformView {
         stackBottom?.constant = horizontal ? 0 : -inset
         stackLeading?.constant = horizontal ? inset : 0
         stackTrailing?.constant = horizontal ? -inset : 0
+
+        if let size = params["symbolSize"] as? NSNumber {
+            symbolPointSize = CGFloat(truncating: size)
+        } else {
+            symbolPointSize = 17
+        }
+        if let weight = params["symbolWeight"] as? NSNumber {
+            symbolImageWeight = .fromFontWeight(weight.intValue)
+        } else {
+            symbolImageWeight = .medium
+        }
 
         let newSelected = (params["selectedIndex"] as? NSNumber)?.intValue
         let selectionChanged = newSelected != selectedIndex
@@ -592,8 +607,9 @@ class iOS26GlassCapsuleView: NSObject, FlutterPlatformView {
 
             var config = UIButton.Configuration.plain()
             config.contentInsets = .zero
-            config.preferredSymbolConfigurationForImage =
-                UIImage.SymbolConfiguration(pointSize: 17, weight: .medium)
+            let symbolConfiguration = UIImage.SymbolConfiguration(
+                pointSize: symbolPointSize, weight: symbolImageWeight)
+            config.preferredSymbolConfigurationForImage = symbolConfiguration
 
             let color: UIColor
             if selectedIndex != nil {
@@ -610,8 +626,7 @@ class iOS26GlassCapsuleView: NSObject, FlutterPlatformView {
                 // by the button's own view and swaps with the replace
                 // transition. The size and tint are baked into the image: a
                 // tinted symbol no longer follows the view's configuration.
-                let sized = glyph.applyingSymbolConfiguration(
-                    UIImage.SymbolConfiguration(pointSize: 17, weight: .medium)) ?? glyph
+                let sized = glyph.applyingSymbolConfiguration(symbolConfiguration) ?? glyph
                 let presented = sized.withTintColor(color, renderingMode: .alwaysOriginal)
                 let changed = !button.symbolName.isEmpty && button.symbolName != symbol
                 button.showSymbol(presented, name: symbol, animated: changed)
@@ -764,5 +779,23 @@ class iOS26GlassCapsuleView: NSObject, FlutterPlatformView {
         let g = CGFloat((argb >> 8) & 0xFF) / 255.0
         let b = CGFloat(argb & 0xFF) / 255.0
         return UIColor(red: r, green: g, blue: b, alpha: a)
+    }
+}
+
+extension UIImage.SymbolWeight {
+    /// Flutter's `FontWeight.value` (100 to 900). Values between the steps
+    /// snap to the nearer symbol weight.
+    static func fromFontWeight(_ value: Int) -> UIImage.SymbolWeight {
+        switch value {
+        case ...150: return .ultraLight
+        case ...250: return .thin
+        case ...350: return .light
+        case ...450: return .regular
+        case ...550: return .medium
+        case ...650: return .semibold
+        case ...750: return .bold
+        case ...850: return .heavy
+        default: return .black
+        }
     }
 }

@@ -19,6 +19,9 @@ class SFSymbol {
   /// The color of the symbol
   final Color? color;
 
+  /// The weight of the symbol. Null keeps the regular weight.
+  final FontWeight? weight;
+
   /// Creates an SF Symbol descriptor for native iOS rendering
-  const SFSymbol(this.name, {this.size = 24.0, this.color});
+  const SFSymbol(this.name, {this.size = 24.0, this.color, this.weight});
 }

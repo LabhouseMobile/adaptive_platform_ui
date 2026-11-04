@@ -54,35 +54,38 @@ class GlassCapsuleItem {
   factory GlassCapsuleItem.fromDestination(AdaptiveNavigationDestination d) {
     String? symbolOf(Object? icon) =>
         icon is String && !icon.contains('/') ? icon : null;
-    ImageProvider? imageOf(Object? icon) => icon is ImageProvider
-        ? icon
-        : icon is ImageIcon
-        ? icon.image
-        : null;
+    ImageProvider? imageOf(Object? icon) =>
+        icon is ImageProvider
+            ? icon
+            : icon is ImageIcon
+            ? icon.image
+            : null;
     final image = imageOf(d.icon);
     final icon = d.icon;
     return GlassCapsuleItem(
       symbol: symbolOf(icon) ?? (d.isSearch ? 'magnifyingglass' : null),
       selectedSymbol: symbolOf(d.selectedIcon),
-      asset: image is AssetImage
-          ? image.assetName
-          : (icon is String && icon.contains('/') ? icon : null),
+      asset:
+          image is AssetImage
+              ? image.assetName
+              : (icon is String && icon.contains('/') ? icon : null),
       file: image is FileImage ? image.file.path : null,
       network: image is NetworkImage ? image.url : null,
       label: d.label,
       badge: d.badgeCount,
-      fallback: icon is IconData
-          ? Icon(icon, size: 22)
-          : image != null
-          ? ClipOval(
-              child: Image(
-                image: image,
-                width: 26,
-                height: 26,
-                fit: BoxFit.cover,
-              ),
-            )
-          : null,
+      fallback:
+          icon is IconData
+              ? Icon(icon, size: 22)
+              : image != null
+              ? ClipOval(
+                child: Image(
+                  image: image,
+                  width: 26,
+                  height: 26,
+                  fit: BoxFit.cover,
+                ),
+              )
+              : null,
     );
   }
 
@@ -180,6 +183,8 @@ class IOS26GlassCapsule extends StatefulWidget {
     this.inset = 0,
     this.tint,
     this.axis = Axis.vertical,
+    this.symbolSize,
+    this.symbolWeight,
   });
 
   final List<GlassCapsuleItem> items;
@@ -200,6 +205,12 @@ class IOS26GlassCapsule extends StatefulWidget {
   /// [height] and whose width grows with the item count ([actionsWidth]).
   /// [inset] then applies to the leading and trailing ends.
   final Axis axis;
+
+  /// Point size of every SF Symbol. Null keeps 17.
+  final double? symbolSize;
+
+  /// Weight of every SF Symbol. Null keeps medium. Sent as [FontWeight.value].
+  final FontWeight? symbolWeight;
 
   /// Width of every control in the trailing bar, as measured on the system's
   /// own bar.
@@ -233,9 +244,10 @@ class _IOS26GlassCapsuleState extends State<IOS26GlassCapsule> {
       MediaQuery.platformBrightnessOf(context) == Brightness.dark;
 
   Map<String, dynamic> get _params {
-    final tint = widget.tint == null
-        ? null
-        : CupertinoDynamicColor.resolve(widget.tint!, context);
+    final tint =
+        widget.tint == null
+            ? null
+            : CupertinoDynamicColor.resolve(widget.tint!, context);
     return <String, dynamic>{
       'items': widget.items.map((i) => i.toNativeMap()).toList(),
       if (widget.selectedIndex != null) 'selectedIndex': widget.selectedIndex,
@@ -243,6 +255,9 @@ class _IOS26GlassCapsuleState extends State<IOS26GlassCapsule> {
       if (widget.axis == Axis.horizontal) 'axis': 'horizontal',
       'isDark': _isDark,
       if (tint != null) 'tint': tint.toARGB32(),
+      if (widget.symbolSize != null) 'symbolSize': widget.symbolSize,
+      if (widget.symbolWeight != null)
+        'symbolWeight': widget.symbolWeight!.value,
     };
   }
 
@@ -320,12 +335,13 @@ class _IOS26GlassCapsuleState extends State<IOS26GlassCapsule> {
       for (final item in widget.items)
         Expanded(
           child: Center(
-            child: item.canShowNatively
-                ? null
-                : IconTheme.merge(
-                    data: IconThemeData(color: item.tint ?? label),
-                    child: item.fallback ?? const SizedBox.shrink(),
-                  ),
+            child:
+                item.canShowNatively
+                    ? null
+                    : IconTheme.merge(
+                      data: IconThemeData(color: item.tint ?? label),
+                      child: item.fallback ?? const SizedBox.shrink(),
+                    ),
           ),
         ),
     ];
@@ -335,9 +351,10 @@ class _IOS26GlassCapsuleState extends State<IOS26GlassCapsule> {
         glass,
         IgnorePointer(
           child: Padding(
-            padding: horizontal
-                ? EdgeInsets.symmetric(horizontal: widget.inset)
-                : EdgeInsets.symmetric(vertical: widget.inset),
+            padding:
+                horizontal
+                    ? EdgeInsets.symmetric(horizontal: widget.inset)
+                    : EdgeInsets.symmetric(vertical: widget.inset),
             child: horizontal ? Row(children: cells) : Column(children: cells),
           ),
         ),
@@ -381,9 +398,10 @@ class _IOS26GlassCapsuleState extends State<IOS26GlassCapsule> {
         borderRadius: BorderRadius.circular(IOS26GlassCapsule.width / 2),
       ),
       child: Padding(
-        padding: horizontal
-            ? EdgeInsets.symmetric(horizontal: widget.inset)
-            : EdgeInsets.symmetric(vertical: widget.inset),
+        padding:
+            horizontal
+                ? EdgeInsets.symmetric(horizontal: widget.inset)
+                : EdgeInsets.symmetric(vertical: widget.inset),
         child: horizontal ? Row(children: cells) : Column(children: cells),
       ),
     );

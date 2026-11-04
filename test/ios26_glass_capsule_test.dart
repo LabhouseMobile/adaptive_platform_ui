@@ -1,4 +1,5 @@
 import 'package:adaptive_platform_ui/adaptive_platform_ui.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -55,6 +56,48 @@ void main() {
         GlassCapsuleItem.fromAction(action, id: 'like').toNativeMap()['id'],
         'like',
       );
+    });
+
+    testWidgets('sends symbol size and weight only when they are set', (
+      tester,
+    ) async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+      try {
+        Future<Map<dynamic, dynamic>> paramsOf({
+          double? symbolSize,
+          FontWeight? symbolWeight,
+        }) async {
+          await tester.pumpWidget(
+            _host(
+              SizedBox(
+                width: IOS26GlassCapsule.width,
+                height: IOS26GlassCapsule.height,
+                child: IOS26GlassCapsule(
+                  symbolSize: symbolSize,
+                  symbolWeight: symbolWeight,
+                  items: const [GlassCapsuleItem(symbol: 'heart')],
+                  onTap: (_) {},
+                ),
+              ),
+            ),
+          );
+          final view = tester.widget<UiKitView>(find.byType(UiKitView));
+          return view.creationParams! as Map;
+        }
+
+        final plain = await paramsOf();
+        expect(plain.containsKey('symbolSize'), isFalse);
+        expect(plain.containsKey('symbolWeight'), isFalse);
+
+        final sized = await paramsOf(
+          symbolSize: 19,
+          symbolWeight: FontWeight.w600,
+        );
+        expect(sized['symbolSize'], 19);
+        expect(sized['symbolWeight'], FontWeight.w600.value);
+      } finally {
+        debugDefaultTargetPlatformOverride = null;
+      }
     });
 
     test('horizontal width mirrors the vertical height', () {
