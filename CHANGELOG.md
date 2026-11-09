@@ -1,5 +1,8 @@
 # Changelog
 
+## [1.0.1-lh6]
+* **NEW**: iPhone Duo: an action with `prominent: true` is now drawn in the vertical bar on a blue fill with a white symbol, as the system's prominent toolbar button. Until now `prominent` only applied to the native top toolbar and was ignored in the vertical bar. Actions that move into the overflow menu stay plain entries
+
 ## [1.0.1-lh5]
 * **FIX**: iPhone Duo: the overflow menu of the vertical bar now always lists its items in the given order, as the top toolbar's menu does. UIKit reversed it depending on where the button sat (on the cover display, but not on the open display)
 * **NEW**: `isDestructive` on `AdaptiveAppBarAction`: where the action ends up as an entry of a native menu (the overflow menu of the top toolbar and of the iPhone Duo vertical bar) it is shown in red. Ignored elsewhere

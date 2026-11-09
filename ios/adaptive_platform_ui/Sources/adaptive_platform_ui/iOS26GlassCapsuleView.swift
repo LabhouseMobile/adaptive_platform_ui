@@ -241,8 +241,20 @@ class iOS26GlassCapsuleView: NSObject, FlutterPlatformView {
             let item = items[index]
             let selected = index == selectedIndex
             let itemTint = (item["tint"] as? NSNumber).map { Self.colorFromARGB($0.intValue) }
+            let prominent = (item["prominent"] as? Bool) ?? false
 
-            var config = UIButton.Configuration.plain()
+            var config: UIButton.Configuration
+            if prominent {
+                // The primary action: a blue fill, inset from the capsule's
+                // edge like the tab selection, with a white symbol.
+                config = UIButton.Configuration.filled()
+                config.cornerStyle = .capsule
+                config.baseBackgroundColor = .systemBlue
+                config.background.backgroundInsets = NSDirectionalEdgeInsets(
+                    top: 3, leading: 3, bottom: 3, trailing: 3)
+            } else {
+                config = UIButton.Configuration.plain()
+            }
             config.contentInsets = .zero
             config.preferredSymbolConfigurationForImage =
                 UIImage.SymbolConfiguration(pointSize: 17, weight: .medium)
@@ -255,7 +267,9 @@ class iOS26GlassCapsuleView: NSObject, FlutterPlatformView {
                 config.attributedTitle = text
             }
             let color: UIColor
-            if selectedIndex != nil {
+            if prominent {
+                color = .white
+            } else if selectedIndex != nil {
                 // A tab: tinted while selected, label colour otherwise.
                 color = selected ? (itemTint ?? tint ?? .systemBlue) : .label
             } else {

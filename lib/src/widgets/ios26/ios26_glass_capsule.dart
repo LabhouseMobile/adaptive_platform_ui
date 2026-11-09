@@ -21,6 +21,7 @@ class GlassCapsuleItem {
     this.badge,
     this.fallback,
     this.menu,
+    this.prominent = false,
   });
 
   /// A toolbar action. Needs an SF Symbol or a title; see [canShow].
@@ -30,6 +31,7 @@ class GlassCapsuleItem {
         title: action.iosSymbol == null ? action.title : null,
         label: action.effectiveLabel,
         tint: action.tintColor,
+        prominent: action.prominent,
         fallback:
             action.iconWidget ??
             (action.icon != null ? Icon(action.icon, size: 22) : null),
@@ -88,6 +90,10 @@ class GlassCapsuleItem {
   /// of reporting a tap: the overflow control of the trailing bar.
   final List<GlassCapsuleMenuEntry>? menu;
 
+  /// Drawn on a blue fill with a white symbol, for the primary action of a
+  /// screen, as the system's prominent toolbar button.
+  final bool prominent;
+
   /// Drawn where there is no UIKit (widget tests, other platforms).
   final Widget? fallback;
 
@@ -109,6 +115,7 @@ class GlassCapsuleItem {
     if (label != null) 'label': label,
     if (tint != null) 'tint': tint!.toARGB32(),
     if (badge != null && badge! > 0) 'badge': badge,
+    if (prominent) 'prominent': true,
     if (menu != null)
       'menu': [
         for (final entry in menu!)

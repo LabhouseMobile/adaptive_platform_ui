@@ -42,6 +42,8 @@ const EdgeInsets duoRightPanePadding = EdgeInsets.only(
 DuoPose poseOf(EdgeInsets padding) =>
     DuoLayout.resolvePose(padding, SystemVerticalBarEdge.unknown)!;
 
+void _noop() {}
+
 void main() {
   group('DuoLayout: detection', () {
     test(
@@ -469,6 +471,28 @@ void main() {
           .cast<Map<String, dynamic>>();
       expect(sent.first.containsKey('destructive'), isFalse);
       expect(sent.last['destructive'], isTrue);
+    });
+
+    test('a prominent action reaches the native capsule as prominent', () {
+      const plain = AdaptiveAppBarAction(iosSymbol: 'plus', onPressed: _noop);
+      const primary = AdaptiveAppBarAction(
+        iosSymbol: 'checkmark',
+        prominent: true,
+        onPressed: _noop,
+      );
+
+      expect(GlassCapsuleItem.fromAction(plain).prominent, isFalse);
+      expect(
+        GlassCapsuleItem.fromAction(plain)
+            .toNativeMap()
+            .containsKey('prominent'),
+        isFalse,
+      );
+      expect(GlassCapsuleItem.fromAction(primary).prominent, isTrue);
+      expect(
+        GlassCapsuleItem.fromAction(primary).toNativeMap()['prominent'],
+        isTrue,
+      );
     });
 
     testWidgets('with room for all, at most three controls show', (
