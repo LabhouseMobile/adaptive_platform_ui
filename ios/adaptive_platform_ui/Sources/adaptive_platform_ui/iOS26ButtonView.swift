@@ -45,6 +45,7 @@ class iOS26ButtonView: NSObject, FlutterPlatformView {
     private var isDark: Bool = false
     private var iconName: String?
     private var iconSize: CGFloat?
+    private var iconWeight: UIImage.SymbolWeight?
     private var iconColor: UIColor?
     private var useSmoothRectangleBorder: Bool = true
 
@@ -77,6 +78,9 @@ class iOS26ButtonView: NSObject, FlutterPlatformView {
             iconName = config["iconName"] as? String
             if let size = config["iconSize"] as? Double {
                 iconSize = CGFloat(size)
+            }
+            if let weight = config["iconWeight"] as? Int {
+                iconWeight = .fromFontWeight(weight)
             }
             if let argb = config["iconColor"] as? Int {
                 iconColor = UIColor(argb: argb)
@@ -204,11 +208,13 @@ class iOS26ButtonView: NSObject, FlutterPlatformView {
                 if let image = UIImage(systemName: iconName) ?? UIImage(named: iconName) {
                     var finalImage = image
 
-                    // Apply icon size
+                    // Apply icon size, and the weight when one was given.
+                    // Without a weight the symbol stays regular.
                     let symbolSize = iconSize ?? 24.0
-                    finalImage = image.applyingSymbolConfiguration(
-                        UIImage.SymbolConfiguration(pointSize: symbolSize)
-                    ) ?? image
+                    let configuration = iconWeight.map {
+                        UIImage.SymbolConfiguration(pointSize: symbolSize, weight: $0)
+                    } ?? UIImage.SymbolConfiguration(pointSize: symbolSize)
+                    finalImage = image.applyingSymbolConfiguration(configuration) ?? image
 
                     // Apply icon color
                     if let color = iconColor {
@@ -377,6 +383,11 @@ class iOS26ButtonView: NSObject, FlutterPlatformView {
                 iconName = args["iconName"] as? String
                 if let size = args["iconSize"] as? Double {
                     iconSize = CGFloat(size)
+                }
+                if let weight = args["iconWeight"] as? Int {
+                    iconWeight = .fromFontWeight(weight)
+                } else {
+                    iconWeight = nil
                 }
                 if let argb = args["iconColor"] as? Int {
                     iconColor = UIColor(argb: argb)

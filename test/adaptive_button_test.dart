@@ -238,6 +238,21 @@ void main() {
       }
     });
 
+    test('sends iconWeight only when the symbol has a weight', () {
+      final regular = IOS26Button.iconParams(
+        const SFSymbol('chevron.backward', size: 20),
+      );
+      expect(regular.containsKey('iconWeight'), isFalse);
+      expect(regular['iconName'], 'chevron.backward');
+      expect(regular['iconSize'], 20);
+
+      final semibold = IOS26Button.iconParams(
+        const SFSymbol('chevron.backward', size: 19, weight: FontWeight.w600),
+      );
+      expect(semibold['iconWeight'], FontWeight.w600.value);
+      expect(semibold['iconSize'], 19);
+    });
+
     testWidgets('renders all iOS 26 button sizes', (WidgetTester tester) async {
       for (final size in IOS26ButtonSize.values) {
         await tester.pumpWidget(

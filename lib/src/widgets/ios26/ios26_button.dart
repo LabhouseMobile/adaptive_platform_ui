@@ -154,6 +154,17 @@ class IOS26Button extends StatefulWidget {
   /// Default is true for smooth rectangle, set to false for circular
   final bool useSmoothRectangleBorder;
 
+  /// Icon entries of the native button. `iconWeight` is [FontWeight.value]
+  /// and is left out when [SFSymbol.weight] is null, so the symbol stays at
+  /// the regular weight. [iconColor] is the ARGB int of [SFSymbol.color].
+  @visibleForTesting
+  static Map<String, dynamic> iconParams(SFSymbol symbol, {int? iconColor}) => {
+    'iconName': symbol.name,
+    'iconSize': symbol.size,
+    if (iconColor != null) 'iconColor': iconColor,
+    if (symbol.weight != null) 'iconWeight': symbol.weight!.value,
+  };
+
   @override
   State<IOS26Button> createState() => _IOS26ButtonState();
 }
@@ -242,14 +253,10 @@ class _IOS26ButtonState extends State<IOS26Button> {
     // Update SF Symbol if changed
     if (oldWidget.sfSymbol?.name != widget.sfSymbol?.name ||
         oldWidget.sfSymbol?.size != widget.sfSymbol?.size ||
-        oldWidget.sfSymbol?.color != widget.sfSymbol?.color) {
+        oldWidget.sfSymbol?.color != widget.sfSymbol?.color ||
+        oldWidget.sfSymbol?.weight != widget.sfSymbol?.weight) {
       if (widget.sfSymbol != null) {
-        _channel.invokeMethod('setIcon', {
-          'iconName': widget.sfSymbol!.name,
-          'iconSize': widget.sfSymbol!.size,
-          if (widget.sfSymbol!.color != null)
-            'iconColor': _colorToARGB(widget.sfSymbol!.color!),
-        });
+        _channel.invokeMethod('setIcon', _iconParams(widget.sfSymbol!));
       }
     }
   }
@@ -262,17 +269,18 @@ class _IOS26ButtonState extends State<IOS26Button> {
       'size': _sizeToString(widget.size),
       'enabled': widget.enabled && widget.onPressed != null,
       'color': widget.color != null ? _colorToHex(widget.color!) : null,
-      'textColor': widget.textColor != null
-          ? _colorToHex(widget.textColor!)
-          : null,
+      'textColor':
+          widget.textColor != null ? _colorToHex(widget.textColor!) : null,
       'isDark': MediaQuery.platformBrightnessOf(context) == Brightness.dark,
       'useSmoothRectangleBorder': widget.useSmoothRectangleBorder,
-      if (widget.sfSymbol != null) 'iconName': widget.sfSymbol!.name,
-      if (widget.sfSymbol != null) 'iconSize': widget.sfSymbol!.size,
-      if (widget.sfSymbol?.color != null)
-        'iconColor': _colorToARGB(widget.sfSymbol!.color!),
+      if (widget.sfSymbol != null) ..._iconParams(widget.sfSymbol!),
     };
   }
+
+  Map<String, dynamic> _iconParams(SFSymbol symbol) => IOS26Button.iconParams(
+    symbol,
+    iconColor: symbol.color == null ? null : _colorToARGB(symbol.color!),
+  );
 
   String _styleToString(IOS26ButtonStyle style) {
     switch (style) {
@@ -339,14 +347,15 @@ class _IOS26ButtonState extends State<IOS26Button> {
       // Wrap in SizedBox for height constraint
       Widget buttonWidget = SizedBox(
         height: _height,
-        child: widget.isChildMode
-            ? Stack(
-                children: [
-                  Positioned.fill(child: platformView),
-                  Center(child: IgnorePointer(child: widget.child!)),
-                ],
-              )
-            : platformView,
+        child:
+            widget.isChildMode
+                ? Stack(
+                  children: [
+                    Positioned.fill(child: platformView),
+                    Center(child: IgnorePointer(child: widget.child!)),
+                  ],
+                )
+                : platformView,
       );
 
       // Apply width constraint if minSize is provided
@@ -354,14 +363,15 @@ class _IOS26ButtonState extends State<IOS26Button> {
         buttonWidget = SizedBox(
           width: widget.minSize!.width,
           height: _height,
-          child: widget.isChildMode
-              ? Stack(
-                  children: [
-                    Positioned.fill(child: platformView),
-                    Center(child: IgnorePointer(child: widget.child!)),
-                  ],
-                )
-              : platformView,
+          child:
+              widget.isChildMode
+                  ? Stack(
+                    children: [
+                      Positioned.fill(child: platformView),
+                      Center(child: IgnorePointer(child: widget.child!)),
+                    ],
+                  )
+                  : platformView,
         );
       }
 
@@ -379,9 +389,10 @@ class _IOS26ButtonState extends State<IOS26Button> {
     );
 
     // If child mode, use the child widget
-    final buttonChild = widget.isChildMode
-        ? widget.child!
-        : Text(widget.label, style: textStyle);
+    final buttonChild =
+        widget.isChildMode
+            ? widget.child!
+            : Text(widget.label, style: textStyle);
 
     switch (widget.style) {
       case IOS26ButtonStyle.filled:
@@ -397,12 +408,13 @@ class _IOS26ButtonState extends State<IOS26Button> {
           onPressed: widget.enabled ? widget.onPressed : null,
           padding:
               widget.padding ?? const EdgeInsets.symmetric(horizontal: 16.0),
-          child: widget.isChildMode
-              ? widget.child!
-              : Text(
-                  widget.label,
-                  style: TextStyle(color: widget.textColor ?? buttonColor),
-                ),
+          child:
+              widget.isChildMode
+                  ? widget.child!
+                  : Text(
+                    widget.label,
+                    style: TextStyle(color: widget.textColor ?? buttonColor),
+                  ),
         );
 
       default:
