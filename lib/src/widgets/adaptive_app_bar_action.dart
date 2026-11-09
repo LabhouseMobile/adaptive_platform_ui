@@ -96,6 +96,8 @@ class AdaptiveAppBarAction {
 
   /// Display this action with a prominent glass background (iOS 26+ only)
   /// - iOS 26+: Uses UIBarButtonItem.Style.prominent for a tinted glass bubble
+  /// - iPhone Duo vertical bar: the control is drawn on a blue fill with a
+  ///   white symbol (in the overflow menu it is a plain entry)
   /// - iOS <26 / Android: Ignored
   final bool prominent;
 
