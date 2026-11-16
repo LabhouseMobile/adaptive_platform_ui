@@ -1,236 +1,62 @@
 # Release Process
 
-This document describes how to create a new release of Adaptive Platform UI.
+Releases are cut from `main` by two GitHub Actions workflows. Nobody edits the
+version or pushes tags by hand.
 
-## Prerequisites
+## While developing
 
-- Write access to the repository
-- All changes merged to `main` branch
-- All tests passing on CI
-- CHANGELOG.md updated with release notes
-
-## Release Steps
-
-### 1. Update Version Numbers
-
-Update the version in `pubspec.yaml`:
-
-```yaml
-version: 0.1.95  # Increment according to semver
-```
-
-### 2. Update CHANGELOG.md
-
-Add a new section at the top of CHANGELOG.md:
+Add every user-facing change to the `## [Unreleased]` section at the top of
+`CHANGELOG.md`, in the usual format:
 
 ```markdown
-## [0.1.95]
+## [Unreleased]
 * **NEW**: Description of new features
 * **FIX**: Description of bug fixes
 * **IMPROVEMENT**: Description of improvements
 ```
 
-**Important**: The version number in brackets `[0.1.95]` must match the tag you'll create.
+## Cutting a release
 
-### 3. Commit Changes
+1. Run the **Create new Release** workflow (`create-new-release.yml`) from the
+   Actions tab, or:
 
-```bash
-git add pubspec.yaml CHANGELOG.md
-git commit -m "chore: Release v0.1.95"
-git push origin main
-```
-
-### 4. Create and Push Tag
-
-```bash
-# Create annotated tag
-git tag -a v0.1.95 -m "Release v0.1.95"
-
-# Push tag to GitHub
-git push origin v0.1.95
-```
-
-### 5. Automated Release
-
-Once the tag is pushed, GitHub Actions will automatically:
-
-1. ✅ Build the example app APK
-2. ✅ Extract release notes from CHANGELOG.md
-3. ✅ Create a GitHub Release
-4. ✅ Upload the APK to the release
-
-You can monitor the progress in the **Actions** tab on GitHub.
-
-### 6. Verify Release
-
-After the workflow completes (usually 5-10 minutes):
-
-1. Go to the [Releases page](https://github.com/berkaycatak/adaptive_platform_ui/releases)
-2. Verify the new release is published
-3. Download and test the APK
-4. Check that release notes are correct
-
-## Release Naming Convention
-
-Follow [Semantic Versioning](https://semver.org/):
-
-- **MAJOR** version (1.0.0): Breaking changes
-- **MINOR** version (0.2.0): New features, backward compatible
-- **PATCH** version (0.1.1): Bug fixes, backward compatible
-
-Examples:
-- `0.1.95` → `0.1.96` (bug fix)
-- `0.1.95` → `0.2.0` (new features)
-- `0.1.95` → `1.0.0` (breaking changes)
-
-## Tag Naming Convention
-
-Always prefix with `v`:
-- ✅ `v0.1.95`
-- ✅ `v1.0.0`
-- ❌ `0.1.95`
-- ❌ `1.0.0`
-
-## Hotfix Releases
-
-For urgent bug fixes:
-
-```bash
-# Create hotfix branch from main
-git checkout -b hotfix/0.1.96 main
-
-# Make fixes and commit
-git add .
-git commit -m "fix: Critical bug fix"
-
-# Merge back to main
-git checkout main
-git merge hotfix/0.1.96
-
-# Update version and changelog
-# ... (follow steps 1-4)
-
-# Delete hotfix branch
-git branch -d hotfix/0.1.96
-```
-
-## Pre-release / Beta Releases
-
-For testing releases before stable:
-
-```bash
-# Use pre-release suffix
-git tag -a v0.2.0-beta.1 -m "Beta release v0.2.0-beta.1"
-git push origin v0.2.0-beta.1
-```
-
-The release will be marked as "Pre-release" on GitHub.
-
-## Rollback a Release
-
-If a release has critical issues:
-
-### Option 1: Delete Release and Tag
-
-```bash
-# Delete the tag locally
-git tag -d v0.1.95
-
-# Delete the tag on GitHub
-git push origin :refs/tags/v0.1.95
-```
-
-Then manually delete the Release on GitHub.
-
-### Option 2: Create Hotfix Release
-
-Create a new patch version with the fix:
-
-```bash
-# Fix the issue
-git commit -m "fix: Critical issue from v0.1.95"
-
-# Create new patch release
-git tag -a v0.1.96 -m "Hotfix release v0.1.96"
-git push origin v0.1.96
-```
-
-## Troubleshooting
-
-### Release workflow failed
-
-1. Check the Actions tab for error logs
-2. Common issues:
-   - CHANGELOG.md format incorrect
-   - Build errors in example app
-   - GitHub token permissions
-
-### Release created but APK missing
-
-1. Check workflow logs for build failures
-2. Verify example app builds locally:
    ```bash
-   cd example
-   flutter build apk --release
+   gh workflow run create-new-release.yml -f version=1.0.2
    ```
 
-### Release notes not showing correctly
+   The version is bare semver (`1.0.2`, `1.0.1-lh6`); a leading `v` is
+   accepted and dropped. The workflow:
+   - branches `release/v<version>` off `main`
+   - runs `scripts/prepare_release.py`, which moves the Unreleased notes into a
+     new `## [<version>]` section and sets `version:` in `pubspec.yaml`
+   - commits `chore: release <version>` and opens a PR into `main` with the
+     `Release` label and a compare link against the latest tag
 
-1. Verify CHANGELOG.md format:
-   ```markdown
-   ## [0.1.95]
-   * Changes here
+   It fails if the Unreleased section is empty or the version already has a
+   section.
 
-   ## [0.1.94]
-   * Previous changes
-   ```
-2. Ensure version in brackets matches tag
+2. Review and merge the PR.
 
-### Cannot push tag
+3. On merge, **Create release from merged Release PR**
+   (`release-on-merged-pr.yml`) tags the merge commit `v<version>` and creates
+   the GitHub release, using that version's CHANGELOG section as the notes
+   (falling back to GitHub's generated notes if the section is empty).
 
-```bash
-# Fetch latest tags
-git fetch --tags
-
-# Check if tag already exists
-git tag -l | grep v0.1.95
-
-# If exists, delete and recreate
-git tag -d v0.1.95
-git tag -a v0.1.95 -m "Release v0.1.95"
-git push origin v0.1.95 --force
-```
-
-## Publishing to pub.dev
-
-After verifying the release on GitHub:
+To preview the changelog change locally:
 
 ```bash
-# Dry run first
-flutter pub publish --dry-run
-
-# Publish to pub.dev
-flutter pub publish
+python3 scripts/prepare_release.py 1.0.2 --dry-run
 ```
 
-Follow the prompts to complete the publishing process.
+## Versioning
 
-## Checklist
+Follow [Semantic Versioning](https://semver.org/). Tags always carry a `v`
+prefix (`v1.0.2`); `pubspec.yaml` and the CHANGELOG headers do not (`1.0.2`).
 
-Before creating a release:
+## Fixing a bad release
 
-- [ ] All PRs merged to main
-- [ ] CI passing on main branch
-- [ ] Version updated in pubspec.yaml
-- [ ] CHANGELOG.md updated with release notes
-- [ ] Commits pushed to main
-- [ ] Tag created and pushed
-- [ ] Release verified on GitHub
-- [ ] APK tested
-- [ ] Package published to pub.dev (if applicable)
+Delete the release and its tag, then cut a new patch version:
 
-## Questions?
-
-If you have questions about the release process, please:
-- Open a [Discussion](https://github.com/berkaycatak/adaptive_platform_ui/discussions)
-- Contact the maintainers
+```bash
+gh release delete v1.0.2 --cleanup-tag
+```
