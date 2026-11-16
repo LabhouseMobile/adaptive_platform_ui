@@ -391,6 +391,8 @@ class iOS26ButtonView: NSObject, FlutterPlatformView {
                 }
                 if let argb = args["iconColor"] as? Int {
                     iconColor = UIColor(argb: argb)
+                } else {
+                    iconColor = nil
                 }
                 applyLiquidGlassStyle()
             }

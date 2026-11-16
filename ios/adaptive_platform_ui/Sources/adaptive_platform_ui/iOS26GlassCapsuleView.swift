@@ -296,7 +296,10 @@ class iOS26GlassCapsuleView: NSObject, FlutterPlatformView {
 
     /// While every factor is 1 the row is split equally, as before. A factor
     /// below 1 (the closing heart) takes `actionPitch * factor` and fades by
-    /// the same amount; the other buttons keep the width they have in a
+    /// the same amount. The full buttons share whatever width is left in the
+    /// frame, so a frame that does not match `actionsWidthFor` stretches them
+    /// instead of breaking constraints. When the frame is
+    /// `IOS26GlassCapsule.actionsWidthFor`, they keep the width they have in a
     /// capsule of only those full buttons. Pitch matches
     /// `IOS26GlassCapsule.actionPitch`.
     private func applyWidthFactors() {
@@ -321,22 +324,33 @@ class iOS26GlassCapsuleView: NSObject, FlutterPlatformView {
             return
         }
         stack.distribution = .fill
-        let fullCount = factors.filter { $0 >= 0.999 }.count
+        // `IOS26GlassCapsule.actionPitch`. Below required so a hidden button
+        // can collapse to 0 (`UISV-hiding`) instead of popping in.
         let actionPitch: CGFloat = 52
-        let fullTotal = fullCount > 0
-            ? 48 + CGFloat(fullCount - 1) * actionPitch
-            : 0
-        let fullEach = fullCount > 0 ? fullTotal / CGFloat(fullCount) : 0
+        let yieldsToHidden = UILayoutPriority(999)
+        var fullButtons: [GlassCapsuleButton] = []
         for (index, button) in buttons.enumerated() {
             let factor = factors[index]
             let full = factor >= 0.999
-            let width = full ? fullEach : actionPitch * factor
-            let constraint = button.widthAnchor.constraint(equalToConstant: width)
-            constraint.isActive = true
-            widthConstraints.append(constraint)
+            if full {
+                fullButtons.append(button)
+            } else {
+                let constraint = button.widthAnchor.constraint(
+                    equalToConstant: actionPitch * factor)
+                constraint.priority = yieldsToHidden
+                widthConstraints.append(constraint)
+            }
             button.alpha = full ? 1 : factor
             button.isUserInteractionEnabled = factor > 0.01
         }
+        if let anchor = fullButtons.first {
+            for button in fullButtons.dropFirst() {
+                let constraint = button.widthAnchor.constraint(equalTo: anchor.widthAnchor)
+                constraint.priority = yieldsToHidden
+                widthConstraints.append(constraint)
+            }
+        }
+        NSLayoutConstraint.activate(widthConstraints)
     }
 
     /// The `id` of every item, or nil if one lacks it or two share it.

@@ -29,8 +29,10 @@ class GlassCapsuleItem {
   ///
   /// [widthFactor] is 1 for a full slot. Below 1 the horizontal capsule draws
   /// this item at `actionPitch * widthFactor` and fades it by the same
-  /// amount, instead of sharing the row equally. Omitted from the native map
-  /// at 1, so a capsule that never sets it keeps today's layout.
+  /// amount. The full slots share the width that is left. Size the capsule
+  /// with [IOS26GlassCapsule.actionsWidthFor] so those slots stay the width
+  /// they have in a capsule of only the full buttons. Omitted from the native
+  /// map at 1, so a capsule that never sets it keeps today's layout.
   ///
   /// [id] is the item's identity, see [GlassCapsuleItem.id].
   factory GlassCapsuleItem.fromAction(
@@ -54,38 +56,35 @@ class GlassCapsuleItem {
   factory GlassCapsuleItem.fromDestination(AdaptiveNavigationDestination d) {
     String? symbolOf(Object? icon) =>
         icon is String && !icon.contains('/') ? icon : null;
-    ImageProvider? imageOf(Object? icon) =>
-        icon is ImageProvider
-            ? icon
-            : icon is ImageIcon
-            ? icon.image
-            : null;
+    ImageProvider? imageOf(Object? icon) => icon is ImageProvider
+        ? icon
+        : icon is ImageIcon
+        ? icon.image
+        : null;
     final image = imageOf(d.icon);
     final icon = d.icon;
     return GlassCapsuleItem(
       symbol: symbolOf(icon) ?? (d.isSearch ? 'magnifyingglass' : null),
       selectedSymbol: symbolOf(d.selectedIcon),
-      asset:
-          image is AssetImage
-              ? image.assetName
-              : (icon is String && icon.contains('/') ? icon : null),
+      asset: image is AssetImage
+          ? image.assetName
+          : (icon is String && icon.contains('/') ? icon : null),
       file: image is FileImage ? image.file.path : null,
       network: image is NetworkImage ? image.url : null,
       label: d.label,
       badge: d.badgeCount,
-      fallback:
-          icon is IconData
-              ? Icon(icon, size: 22)
-              : image != null
-              ? ClipOval(
-                child: Image(
-                  image: image,
-                  width: 26,
-                  height: 26,
-                  fit: BoxFit.cover,
-                ),
-              )
-              : null,
+      fallback: icon is IconData
+          ? Icon(icon, size: 22)
+          : image != null
+          ? ClipOval(
+              child: Image(
+                image: image,
+                width: 26,
+                height: 26,
+                fit: BoxFit.cover,
+              ),
+            )
+          : null,
     );
   }
 
@@ -113,7 +112,9 @@ class GlassCapsuleItem {
   /// Drawn where there is no UIKit (widget tests, other platforms).
   final Widget? fallback;
 
-  /// Share of a horizontal slot, 0 to 1. 1 is a normal button. See [fromAction].
+  /// Share of a horizontal slot, 0 to 1. 1 is a normal button. Below 1 the
+  /// slot is `actionPitch * widthFactor` wide. See [fromAction] and
+  /// [IOS26GlassCapsule.actionsWidthFor].
   final double widthFactor;
 
   /// Whether the native capsule has something to draw for this item.
@@ -202,8 +203,10 @@ class IOS26GlassCapsule extends StatefulWidget {
 
   /// Direction the items are laid out in. [Axis.vertical] is a column (the
   /// Duo trailing bar); [Axis.horizontal] is a pill whose height is
-  /// [height] and whose width grows with the item count ([actionsWidth]).
-  /// [inset] then applies to the leading and trailing ends.
+  /// [height]. Its width is [actionsWidth] while every slot is full, and
+  /// [actionsWidthFor] while any [GlassCapsuleItem.widthFactor] is below 1.
+  /// [inset] then applies to the leading and trailing ends, on top of that
+  /// width.
   final Axis axis;
 
   /// Point size of every SF Symbol. Null keeps 17.
@@ -225,6 +228,20 @@ class IOS26GlassCapsule extends StatefulWidget {
   /// Width of a horizontal capsule of [count] toolbar items.
   static double actionsWidth(int count) => width + (count - 1) * actionPitch;
 
+  /// Width of a horizontal capsule whose slots have these [factors].
+  ///
+  /// A factor of 1 (or at least 0.999) is a full slot. Anything lower is a
+  /// partial slot of [actionPitch] times that factor. Full slots keep the
+  /// width they have in a capsule of only those slots. Values outside 0...1
+  /// are clamped. [inset] is not included: add `inset * 2` when the capsule
+  /// pads its ends.
+  static double actionsWidthFor(Iterable<double> factors) {
+    final fs = factors.map((f) => f.clamp(0.0, 1.0)).toList();
+    final full = fs.where((f) => f >= 0.999).length;
+    final partial = fs.where((f) => f < 0.999).fold(0.0, (a, f) => a + f);
+    return (full > 0 ? actionsWidth(full) : 0) + actionPitch * partial;
+  }
+
   /// Height of a capsule of [count] toolbar items.
   static double actionsHeight(int count) => width + (count - 1) * actionPitch;
 
@@ -244,10 +261,9 @@ class _IOS26GlassCapsuleState extends State<IOS26GlassCapsule> {
       MediaQuery.platformBrightnessOf(context) == Brightness.dark;
 
   Map<String, dynamic> get _params {
-    final tint =
-        widget.tint == null
-            ? null
-            : CupertinoDynamicColor.resolve(widget.tint!, context);
+    final tint = widget.tint == null
+        ? null
+        : CupertinoDynamicColor.resolve(widget.tint!, context);
     return <String, dynamic>{
       'items': widget.items.map((i) => i.toNativeMap()).toList(),
       if (widget.selectedIndex != null) 'selectedIndex': widget.selectedIndex,
@@ -335,13 +351,12 @@ class _IOS26GlassCapsuleState extends State<IOS26GlassCapsule> {
       for (final item in widget.items)
         Expanded(
           child: Center(
-            child:
-                item.canShowNatively
-                    ? null
-                    : IconTheme.merge(
-                      data: IconThemeData(color: item.tint ?? label),
-                      child: item.fallback ?? const SizedBox.shrink(),
-                    ),
+            child: item.canShowNatively
+                ? null
+                : IconTheme.merge(
+                    data: IconThemeData(color: item.tint ?? label),
+                    child: item.fallback ?? const SizedBox.shrink(),
+                  ),
           ),
         ),
     ];
@@ -351,10 +366,9 @@ class _IOS26GlassCapsuleState extends State<IOS26GlassCapsule> {
         glass,
         IgnorePointer(
           child: Padding(
-            padding:
-                horizontal
-                    ? EdgeInsets.symmetric(horizontal: widget.inset)
-                    : EdgeInsets.symmetric(vertical: widget.inset),
+            padding: horizontal
+                ? EdgeInsets.symmetric(horizontal: widget.inset)
+                : EdgeInsets.symmetric(vertical: widget.inset),
             child: horizontal ? Row(children: cells) : Column(children: cells),
           ),
         ),
@@ -398,10 +412,9 @@ class _IOS26GlassCapsuleState extends State<IOS26GlassCapsule> {
         borderRadius: BorderRadius.circular(IOS26GlassCapsule.width / 2),
       ),
       child: Padding(
-        padding:
-            horizontal
-                ? EdgeInsets.symmetric(horizontal: widget.inset)
-                : EdgeInsets.symmetric(vertical: widget.inset),
+        padding: horizontal
+            ? EdgeInsets.symmetric(horizontal: widget.inset)
+            : EdgeInsets.symmetric(vertical: widget.inset),
         child: horizontal ? Row(children: cells) : Column(children: cells),
       ),
     );

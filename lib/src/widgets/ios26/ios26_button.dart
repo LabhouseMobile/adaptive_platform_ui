@@ -269,8 +269,9 @@ class _IOS26ButtonState extends State<IOS26Button> {
       'size': _sizeToString(widget.size),
       'enabled': widget.enabled && widget.onPressed != null,
       'color': widget.color != null ? _colorToHex(widget.color!) : null,
-      'textColor':
-          widget.textColor != null ? _colorToHex(widget.textColor!) : null,
+      'textColor': widget.textColor != null
+          ? _colorToHex(widget.textColor!)
+          : null,
       'isDark': MediaQuery.platformBrightnessOf(context) == Brightness.dark,
       'useSmoothRectangleBorder': widget.useSmoothRectangleBorder,
       if (widget.sfSymbol != null) ..._iconParams(widget.sfSymbol!),
@@ -337,7 +338,10 @@ class _IOS26ButtonState extends State<IOS26Button> {
   @override
   Widget build(BuildContext context) {
     // Only use native implementation on iOS
-    if (!kIsWeb && Platform.isIOS) {
+    // `defaultTargetPlatform` lets widget tests reach the platform view.
+    // `Platform.isIOS` stays false under `flutter test`.
+    if (!kIsWeb &&
+        (Platform.isIOS || defaultTargetPlatform == TargetPlatform.iOS)) {
       final platformView = UiKitView(
         viewType: 'adaptive_platform_ui/ios26_button',
         creationParams: _buildCreationParams(),
@@ -347,15 +351,14 @@ class _IOS26ButtonState extends State<IOS26Button> {
       // Wrap in SizedBox for height constraint
       Widget buttonWidget = SizedBox(
         height: _height,
-        child:
-            widget.isChildMode
-                ? Stack(
-                  children: [
-                    Positioned.fill(child: platformView),
-                    Center(child: IgnorePointer(child: widget.child!)),
-                  ],
-                )
-                : platformView,
+        child: widget.isChildMode
+            ? Stack(
+                children: [
+                  Positioned.fill(child: platformView),
+                  Center(child: IgnorePointer(child: widget.child!)),
+                ],
+              )
+            : platformView,
       );
 
       // Apply width constraint if minSize is provided
@@ -363,15 +366,14 @@ class _IOS26ButtonState extends State<IOS26Button> {
         buttonWidget = SizedBox(
           width: widget.minSize!.width,
           height: _height,
-          child:
-              widget.isChildMode
-                  ? Stack(
-                    children: [
-                      Positioned.fill(child: platformView),
-                      Center(child: IgnorePointer(child: widget.child!)),
-                    ],
-                  )
-                  : platformView,
+          child: widget.isChildMode
+              ? Stack(
+                  children: [
+                    Positioned.fill(child: platformView),
+                    Center(child: IgnorePointer(child: widget.child!)),
+                  ],
+                )
+              : platformView,
         );
       }
 
@@ -389,10 +391,9 @@ class _IOS26ButtonState extends State<IOS26Button> {
     );
 
     // If child mode, use the child widget
-    final buttonChild =
-        widget.isChildMode
-            ? widget.child!
-            : Text(widget.label, style: textStyle);
+    final buttonChild = widget.isChildMode
+        ? widget.child!
+        : Text(widget.label, style: textStyle);
 
     switch (widget.style) {
       case IOS26ButtonStyle.filled:
@@ -408,13 +409,12 @@ class _IOS26ButtonState extends State<IOS26Button> {
           onPressed: widget.enabled ? widget.onPressed : null,
           padding:
               widget.padding ?? const EdgeInsets.symmetric(horizontal: 16.0),
-          child:
-              widget.isChildMode
-                  ? widget.child!
-                  : Text(
-                    widget.label,
-                    style: TextStyle(color: widget.textColor ?? buttonColor),
-                  ),
+          child: widget.isChildMode
+              ? widget.child!
+              : Text(
+                  widget.label,
+                  style: TextStyle(color: widget.textColor ?? buttonColor),
+                ),
         );
 
       default:

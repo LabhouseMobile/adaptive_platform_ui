@@ -48,13 +48,26 @@ void main() {
       );
     });
 
-    test('fromAction forwards id', () {
+    test('fromAction forwards id and widthFactor', () {
       final action = AdaptiveAppBarAction(iosSymbol: 'heart', onPressed: () {});
       expect(GlassCapsuleItem.fromAction(action).id, isNull);
       expect(GlassCapsuleItem.fromAction(action, id: 'like').id, 'like');
       expect(
         GlassCapsuleItem.fromAction(action, id: 'like').toNativeMap()['id'],
         'like',
+      );
+      expect(
+        GlassCapsuleItem.fromAction(
+          action,
+        ).toNativeMap().containsKey('widthFactor'),
+        isFalse,
+      );
+      expect(
+        GlassCapsuleItem.fromAction(
+          action,
+          widthFactor: .5,
+        ).toNativeMap()['widthFactor'],
+        .5,
       );
     });
 
@@ -88,6 +101,25 @@ void main() {
         final plain = await paramsOf();
         expect(plain.containsKey('symbolSize'), isFalse);
         expect(plain.containsKey('symbolWeight'), isFalse);
+        expect(plain.containsKey('axis'), isFalse);
+
+        await tester.pumpWidget(
+          _host(
+            SizedBox(
+              width: IOS26GlassCapsule.actionsWidth(1),
+              height: IOS26GlassCapsule.height,
+              child: IOS26GlassCapsule(
+                axis: Axis.horizontal,
+                items: const [GlassCapsuleItem(symbol: 'heart')],
+                onTap: (_) {},
+              ),
+            ),
+          ),
+        );
+        final horizontal =
+            tester.widget<UiKitView>(find.byType(UiKitView)).creationParams!
+                as Map;
+        expect(horizontal['axis'], 'horizontal');
 
         final sized = await paramsOf(
           symbolSize: 19,
@@ -98,6 +130,17 @@ void main() {
       } finally {
         debugDefaultTargetPlatformOverride = null;
       }
+    });
+
+    test('actionsWidthFor keeps full slots and adds the closing ones', () {
+      expect(
+        IOS26GlassCapsule.actionsWidthFor([1, 1, 1]),
+        IOS26GlassCapsule.actionsWidth(3),
+      );
+      expect(IOS26GlassCapsule.actionsWidthFor([0.5, 1]), 74);
+      expect(IOS26GlassCapsule.actionsWidthFor([1, 0.5, 1]), 126);
+      expect(IOS26GlassCapsule.actionsWidthFor([1.5, -1]), 48);
+      expect(IOS26GlassCapsule.actionsWidthFor([0.5]), 26);
     });
 
     test('horizontal width mirrors the vertical height', () {

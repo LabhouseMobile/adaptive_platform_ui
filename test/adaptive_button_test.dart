@@ -1,5 +1,7 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:adaptive_platform_ui/adaptive_platform_ui.dart';
 
@@ -251,6 +253,64 @@ void main() {
       );
       expect(semibold['iconWeight'], FontWeight.w600.value);
       expect(semibold['iconSize'], 19);
+    });
+
+    testWidgets('setIcon follows a weight-only change', (tester) async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+      final calls = <MethodCall>[];
+      MethodChannel? channel;
+      try {
+        Future<void> pump(FontWeight? weight) {
+          return tester.pumpWidget(
+            CupertinoApp(
+              home: IOS26Button.sfSymbol(
+                onPressed: () {},
+                sfSymbol: SFSymbol('heart', size: 19, weight: weight),
+              ),
+            ),
+          );
+        }
+
+        await pump(FontWeight.w600);
+        final params =
+            tester.widget<UiKitView>(find.byType(UiKitView)).creationParams!
+                as Map;
+        channel = MethodChannel(
+          'adaptive_platform_ui/ios26_button_${params['id']}',
+        );
+        tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          channel,
+          (call) async {
+            calls.add(call);
+            return null;
+          },
+        );
+
+        await pump(FontWeight.w500);
+        final weighted = calls.where((call) => call.method == 'setIcon');
+        expect(weighted, hasLength(1));
+        expect(
+          (weighted.single.arguments as Map)['iconWeight'],
+          FontWeight.w500.value,
+        );
+
+        calls.clear();
+        await pump(null);
+        final cleared = calls.where((call) => call.method == 'setIcon');
+        expect(cleared, hasLength(1));
+        expect(
+          (cleared.single.arguments as Map).containsKey('iconWeight'),
+          isFalse,
+        );
+      } finally {
+        if (channel != null) {
+          tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+            channel,
+            null,
+          );
+        }
+        debugDefaultTargetPlatformOverride = null;
+      }
     });
 
     testWidgets('renders all iOS 26 button sizes', (WidgetTester tester) async {
