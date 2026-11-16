@@ -154,6 +154,17 @@ class IOS26Button extends StatefulWidget {
   /// Default is true for smooth rectangle, set to false for circular
   final bool useSmoothRectangleBorder;
 
+  /// Icon entries of the native button. `iconWeight` is [FontWeight.value]
+  /// and is left out when [SFSymbol.weight] is null, so the symbol stays at
+  /// the regular weight. [iconColor] is the ARGB int of [SFSymbol.color].
+  @visibleForTesting
+  static Map<String, dynamic> iconParams(SFSymbol symbol, {int? iconColor}) => {
+    'iconName': symbol.name,
+    'iconSize': symbol.size,
+    if (iconColor != null) 'iconColor': iconColor,
+    if (symbol.weight != null) 'iconWeight': symbol.weight!.value,
+  };
+
   @override
   State<IOS26Button> createState() => _IOS26ButtonState();
 }
@@ -242,14 +253,10 @@ class _IOS26ButtonState extends State<IOS26Button> {
     // Update SF Symbol if changed
     if (oldWidget.sfSymbol?.name != widget.sfSymbol?.name ||
         oldWidget.sfSymbol?.size != widget.sfSymbol?.size ||
-        oldWidget.sfSymbol?.color != widget.sfSymbol?.color) {
+        oldWidget.sfSymbol?.color != widget.sfSymbol?.color ||
+        oldWidget.sfSymbol?.weight != widget.sfSymbol?.weight) {
       if (widget.sfSymbol != null) {
-        _channel.invokeMethod('setIcon', {
-          'iconName': widget.sfSymbol!.name,
-          'iconSize': widget.sfSymbol!.size,
-          if (widget.sfSymbol!.color != null)
-            'iconColor': _colorToARGB(widget.sfSymbol!.color!),
-        });
+        _channel.invokeMethod('setIcon', _iconParams(widget.sfSymbol!));
       }
     }
   }
@@ -267,12 +274,14 @@ class _IOS26ButtonState extends State<IOS26Button> {
           : null,
       'isDark': MediaQuery.platformBrightnessOf(context) == Brightness.dark,
       'useSmoothRectangleBorder': widget.useSmoothRectangleBorder,
-      if (widget.sfSymbol != null) 'iconName': widget.sfSymbol!.name,
-      if (widget.sfSymbol != null) 'iconSize': widget.sfSymbol!.size,
-      if (widget.sfSymbol?.color != null)
-        'iconColor': _colorToARGB(widget.sfSymbol!.color!),
+      if (widget.sfSymbol != null) ..._iconParams(widget.sfSymbol!),
     };
   }
+
+  Map<String, dynamic> _iconParams(SFSymbol symbol) => IOS26Button.iconParams(
+    symbol,
+    iconColor: symbol.color == null ? null : _colorToARGB(symbol.color!),
+  );
 
   String _styleToString(IOS26ButtonStyle style) {
     switch (style) {
@@ -329,7 +338,10 @@ class _IOS26ButtonState extends State<IOS26Button> {
   @override
   Widget build(BuildContext context) {
     // Only use native implementation on iOS
-    if (!kIsWeb && Platform.isIOS) {
+    // `defaultTargetPlatform` lets widget tests reach the platform view.
+    // `Platform.isIOS` stays false under `flutter test`.
+    if (!kIsWeb &&
+        (Platform.isIOS || defaultTargetPlatform == TargetPlatform.iOS)) {
       final platformView = UiKitView(
         viewType: 'adaptive_platform_ui/ios26_button',
         creationParams: _buildCreationParams(),
