@@ -1,0 +1,52 @@
+name: Create release from merged Release PR
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    if: >
+      github.event.pull_request.merged == true &&
+      contains(github.event.pull_request.labels.*.name, 'Release')
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+
+      - name: Read package version
+        id: version
+        run: echo "value=$(yq -r '.version' pubspec.yaml)" >> "$GITHUB_OUTPUT"
+
+      - name: Extract release notes from CHANGELOG.md
+        env:
+          VERSION: ${{ steps.version.outputs.value }}
+        run: |
+          awk -v header="## [$VERSION]" '
+            $0 == header { found = 1; next }
+            found && /^## \[/ { exit }
+            found { print }
+          ' CHANGELOG.md > release_notes.md
+          cat release_notes.md
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.value }}
+          TARGET: ${{ github.event.pull_request.merge_commit_sha }}
+        run: |
+          if [ -s release_notes.md ]; then
+            NOTES=(--notes-file release_notes.md)
+          else
+            NOTES=(--generate-notes)
+          fi
+          gh release create "v$VERSION" \
+            --target "$TARGET" \
+            --title "v$VERSION" \
+            "${NOTES[@]}"
