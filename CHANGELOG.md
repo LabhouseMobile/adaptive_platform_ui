@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+
+## [1.0.1-lh6]
 * **NEW**: `IOS26GlassCapsule.actionsWidthFor` is the width of a horizontal capsule whose slots have width factors. Full slots stay the size they have in a capsule of only those slots; a closing slot adds `actionPitch` times its factor
 * **FIX**: A horizontal `IOS26GlassCapsule` with a `widthFactor` below 1 fills the frame it is given. A partial slot takes `actionPitch * widthFactor` and the full slots share the rest, instead of requiring the frame to equal that sum and breaking constraints when it does not
 * **FIX**: An iOS 26 button drops its icon color when the new `SFSymbol` has none. It used to keep the previous color
