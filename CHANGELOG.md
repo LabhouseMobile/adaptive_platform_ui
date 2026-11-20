@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+
+## [1.0.1-lh7]
 * **FIX**: A horizontal `IOS26GlassCapsule` created with a `widthFactor` below 1, or given a new item while one is below 1, no longer crashes with "Unable to activate constraint ... no common ancestor". The width constraints now wait until the buttons are in the capsule
 
 ## [1.0.1-lh6]
