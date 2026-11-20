@@ -301,29 +301,51 @@ class iOS26GlassCapsuleView: NSObject, FlutterPlatformView {
     /// instead of breaking constraints. When the frame is
     /// `IOS26GlassCapsule.actionsWidthFor`, they keep the width they have in a
     /// capsule of only those full buttons. Pitch matches
-    /// `IOS26GlassCapsule.actionPitch`.
+    /// `IOS26GlassCapsule.actionPitch`. The width constraints themselves are
+    /// built by `activateWidthConstraints`, which may have to wait for the
+    /// buttons to join the stack.
     private func applyWidthFactors() {
         NSLayoutConstraint.deactivate(widthConstraints)
         widthConstraints = []
-        let reset = {
-            self.stack.distribution = .fillEqually
-            for button in self.buttons {
+        guard let factors = currentWidthFactors() else {
+            stack.distribution = .fillEqually
+            for button in buttons {
                 button.alpha = 1
                 button.isUserInteractionEnabled = true
             }
-        }
-        guard horizontal, buttons.count == items.count, !buttons.isEmpty else {
-            reset()
-            return
-        }
-        let factors: [CGFloat] = items.map { item in
-            min(1, max(0, CGFloat((item["widthFactor"] as? NSNumber)?.doubleValue ?? 1)))
-        }
-        guard factors.contains(where: { $0 < 0.999 }) else {
-            reset()
             return
         }
         stack.distribution = .fill
+        for (index, button) in buttons.enumerated() {
+            let factor = factors[index]
+            button.alpha = factor >= 0.999 ? 1 : factor
+            button.isUserInteractionEnabled = factor > 0.01
+        }
+        activateWidthConstraints()
+    }
+
+    /// The clamped `widthFactor` of every item, or nil while the capsule is
+    /// not horizontal, has no buttons for its items, or has every factor at 1.
+    private func currentWidthFactors() -> [CGFloat]? {
+        guard horizontal, buttons.count == items.count, !buttons.isEmpty else { return nil }
+        let factors: [CGFloat] = items.map { item in
+            min(1, max(0, CGFloat((item["widthFactor"] as? NSNumber)?.doubleValue ?? 1)))
+        }
+        return factors.contains(where: { $0 < 0.999 }) ? factors : nil
+    }
+
+    /// Builds and activates the width constraints for the current factors.
+    /// A constraint between two views with no common ancestor throws, and a
+    /// button created by `reconcileButtons` only joins the stack when
+    /// `ItemTransition.run` arranges it. So nothing is activated until every
+    /// button is in the stack; `run` calls this again right after arranging.
+    /// It leaves alpha, visibility and interaction alone, since the animated
+    /// transition sets those on fresh buttons.
+    private func activateWidthConstraints() {
+        NSLayoutConstraint.deactivate(widthConstraints)
+        widthConstraints = []
+        guard let factors = currentWidthFactors() else { return }
+        guard buttons.allSatisfy({ $0.superview === stack }) else { return }
         // `IOS26GlassCapsule.actionPitch`. Below required so a hidden button
         // can collapse to 0 (`UISV-hiding`) instead of popping in.
         let actionPitch: CGFloat = 52
@@ -331,8 +353,7 @@ class iOS26GlassCapsuleView: NSObject, FlutterPlatformView {
         var fullButtons: [GlassCapsuleButton] = []
         for (index, button) in buttons.enumerated() {
             let factor = factors[index]
-            let full = factor >= 0.999
-            if full {
+            if factor >= 0.999 {
                 fullButtons.append(button)
             } else {
                 let constraint = button.widthAnchor.constraint(
@@ -340,8 +361,6 @@ class iOS26GlassCapsuleView: NSObject, FlutterPlatformView {
                 constraint.priority = yieldsToHidden
                 widthConstraints.append(constraint)
             }
-            button.alpha = full ? 1 : factor
-            button.isUserInteractionEnabled = factor > 0.01
         }
         if let anchor = fullButtons.first {
             for button in fullButtons.dropFirst() {
@@ -532,6 +551,7 @@ class iOS26GlassCapsuleView: NSObject, FlutterPlatformView {
             for button in desired { button.restingAlpha = button.alpha }
             guard animate else {
                 view.arrange(desired)
+                view.activateWidthConstraints()
                 view.rebuildBadges()
                 return
             }
@@ -542,6 +562,7 @@ class iOS26GlassCapsuleView: NSObject, FlutterPlatformView {
                     button.isHidden = true
                 }
                 view.arrange(order)
+                view.activateWidthConstraints()
                 view.rebuildBadges()
                 view.container.layoutIfNeeded()
             }
