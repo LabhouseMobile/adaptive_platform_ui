@@ -66,6 +66,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # Pin the JDK: the runner image's default (Java 25 on ubuntu-26.04)
+      # is too new for the example app's Gradle 8.12.
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
