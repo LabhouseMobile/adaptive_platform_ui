@@ -1,7 +1,17 @@
 # Changelog
 
-## [1.0.1-lh6]
+## [Unreleased]
 * **NEW**: iPhone Duo: an action with `prominent: true` is now drawn in the vertical bar on a blue fill with a white symbol, as the system's prominent toolbar button. Until now `prominent` only applied to the native top toolbar and was ignored in the vertical bar. Actions that move into the overflow menu stay plain entries
+
+## [1.0.1-lh7]
+* **FIX**: A horizontal `IOS26GlassCapsule` created with a `widthFactor` below 1, or given a new item while one is below 1, no longer crashes with "Unable to activate constraint ... no common ancestor". The width constraints now wait until the buttons are in the capsule
+
+## [1.0.1-lh6]
+* **NEW**: `IOS26GlassCapsule.actionsWidthFor` is the width of a horizontal capsule whose slots have width factors. Full slots stay the size they have in a capsule of only those slots; a closing slot adds `actionPitch` times its factor
+* **FIX**: A horizontal `IOS26GlassCapsule` with a `widthFactor` below 1 fills the frame it is given. A partial slot takes `actionPitch * widthFactor` and the full slots share the rest, instead of requiring the frame to equal that sum and breaking constraints when it does not
+* **FIX**: An iOS 26 button drops its icon color when the new `SFSymbol` has none. It used to keep the previous color
+* **NEW**: `IOS26GlassCapsule.symbolSize` and `symbolWeight` set the point size and weight of every SF Symbol in the capsule. Left unset, the symbols stay 17pt medium
+* **NEW**: `SFSymbol.weight`. An iOS 26 button sends it as `iconWeight` and draws the symbol at that weight. Left unset, the symbol stays regular
 
 ## [1.0.1-lh5]
 * **FIX**: iPhone Duo: the overflow menu of the vertical bar now always lists its items in the given order, as the top toolbar's menu does. UIKit reversed it depending on where the button sat (on the cover display, but not on the open display)

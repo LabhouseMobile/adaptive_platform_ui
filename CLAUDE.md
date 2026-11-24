@@ -87,7 +87,7 @@ Located in `ios/Classes/`:
 ## Conventions
 
 - **Commit messages**: Conventional commits (`feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`)
-- **Releases**: Update version in `pubspec.yaml` + `CHANGELOG.md`, tag with `v` prefix (e.g., `v0.1.101`), push tag to trigger release workflow
+- **Releases**: Add entries under `## [Unreleased]` in `CHANGELOG.md` as you go. To release, run the **Create new Release** workflow (Actions tab, or `gh workflow run create-new-release.yml -f version=1.0.2`); it opens a `Release`-labelled PR that bumps `pubspec.yaml` and moves the Unreleased notes under the new version. Merging that PR tags `v<version>` and creates the GitHub release. See `.github/RELEASING.md`
 - **CHANGELOG format**: `## [version]` header with `* **NEW**:`, `* **FIX**:`, `* **IMPROVEMENT**:` entries
 - **New widgets**: Follow the `Adaptive*` naming pattern, implement all three platform paths, add test file in `test/`, add demo page in `example/lib/pages/demos/`
 - **Colors in platform channels**: Passed as ARGB integers or hex strings
