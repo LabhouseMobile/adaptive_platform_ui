@@ -168,8 +168,10 @@ class AdaptiveButton extends StatelessWidget {
   final Brightness? brightness;
 
   @override
-  Widget build(BuildContext context) => AdaptiveBrightness.scoped(
-    brightness: brightness,
+  // The scope is always installed, so the tree keeps its shape when
+  // [brightness] goes between null and a value.
+  Widget build(BuildContext context) => AdaptiveBrightness(
+    brightness: brightness ?? AdaptiveBrightness.of(context),
     child: _buildButton(context),
   );
 

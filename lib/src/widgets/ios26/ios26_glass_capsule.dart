@@ -201,12 +201,11 @@ class IOS26GlassCapsule extends StatefulWidget {
   final List<GlassCapsuleItem> items;
   final ValueChanged<int> onTap;
 
-  /// The brightness native components below draw in, or null to follow the
-  /// nearest [AdaptiveBrightness] and then the device. Set it to the app's own
-  /// brightness so a light-mode app on a dark-mode device does not get dark
-  /// native components.
+  /// The brightness this capsule draws in; wins over the nearest
+  /// [AdaptiveBrightness]. Null follows it, then the device. Unlike the other
+  /// `brightness` parameters it installs no scope for the items' `fallback`
+  /// widgets.
   final Brightness? brightness;
-
 
   /// Called with the [GlassCapsuleMenuEntry.id] chosen from an item's menu.
   final ValueChanged<int>? onMenuTap;
@@ -277,10 +276,19 @@ class _IOS26GlassCapsuleState extends State<IOS26GlassCapsule> {
   bool get _isDark =>
       (widget.brightness ?? AdaptiveBrightness.of(context)) == Brightness.dark;
 
+  /// [color] as drawn in the brightness of this capsule. It follows the theme
+  /// unless the capsule is given another brightness, so a light capsule in a
+  /// dark app does not draw a white icon on light glass.
+  Color _resolve(Color color) {
+    final themeIsDark = CupertinoTheme.brightnessOf(context) == Brightness.dark;
+    if (themeIsDark == _isDark || color is! CupertinoDynamicColor) {
+      return CupertinoDynamicColor.resolve(color, context);
+    }
+    return _isDark ? color.darkColor : color.color;
+  }
+
   Map<String, dynamic> get _params {
-    final tint = widget.tint == null
-        ? null
-        : CupertinoDynamicColor.resolve(widget.tint!, context);
+    final tint = widget.tint == null ? null : _resolve(widget.tint!);
     return <String, dynamic>{
       'items': widget.items.map((i) => i.toNativeMap()).toList(),
       if (widget.selectedIndex != null) 'selectedIndex': widget.selectedIndex,
@@ -362,7 +370,7 @@ class _IOS26GlassCapsuleState extends State<IOS26GlassCapsule> {
     // An item with only a Flutter icon (an IconData or a custom widget) has
     // nothing the native side can draw. The glass and the button stay native;
     // the icon is laid over its cell and lets touches through.
-    final label = CupertinoColors.label.resolveFrom(context);
+    final label = _resolve(CupertinoColors.label);
     final horizontal = widget.axis == Axis.horizontal;
     final cells = [
       for (final item in widget.items)
@@ -398,7 +406,7 @@ class _IOS26GlassCapsuleState extends State<IOS26GlassCapsule> {
   }
 
   Widget _buildFallback() {
-    final label = CupertinoColors.label.resolveFrom(context);
+    final label = _resolve(CupertinoColors.label);
     final tint = widget.tint ?? CupertinoTheme.of(context).primaryColor;
     final horizontal = widget.axis == Axis.horizontal;
     final cells = [
@@ -429,7 +437,7 @@ class _IOS26GlassCapsuleState extends State<IOS26GlassCapsule> {
     ];
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: CupertinoColors.systemFill.resolveFrom(context),
+        color: _resolve(CupertinoColors.systemFill),
         borderRadius: BorderRadius.circular(IOS26GlassCapsule.width / 2),
       ),
       child: Padding(

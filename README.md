@@ -257,18 +257,22 @@ Without a host every page draws its own toolbar, as before.
 
 ### AdaptiveBrightness
 
-Native iOS 26 components are drawn light or dark to match the device. An app that picks its own brightness, say light while the device is dark, should say so, or it gets dark native menus and bars over a light screen:
+The native iOS 26 views and the Cupertino fallbacks (cards, tiles, snack bars, tooltips, the scaffold's default text colour) are drawn light or dark to match the device. An app that picks its own brightness, say light while the device is dark, should say so, or it gets dark native menus and bars over a light screen.
+
+`AdaptiveApp` already does this from its `themeMode`. With a plain `MaterialApp` or `CupertinoApp`, put the scope above the navigator and wrap the toolbar host with it (the host builds the top toolbar and the Duo bar above its child):
 
 ```dart
 MaterialApp(
   builder: (context, child) => AdaptiveBrightness(
-    brightness: Theme.of(context).brightness,
-    child: child ?? const SizedBox.shrink(),
+    brightness: Theme.of(context).brightness, // CupertinoTheme.brightnessOf(context) in a CupertinoApp
+    child: AdaptiveToolbarHost(child: child ?? const SizedBox.shrink()),
   ),
 );
 ```
 
-`AdaptiveToolbarHost`, `AdaptiveScaffold`, `AdaptiveButton` and `IOS26GlassCapsule` also take a `brightness` that applies to their own subtree. Without either, nothing changes: the device's brightness is used.
+Do not add it to `AdaptiveApp.builder`: that sits above the theme and would force light.
+
+`AdaptiveToolbarHost`, `AdaptiveScaffold` and `AdaptiveButton` also take a `brightness` that applies to their own subtree, and `IOS26GlassCapsule` one for its own drawing. Two limits: under a host, an `AdaptiveScaffold`'s `brightness` covers its body only, since the host owns the top toolbar and the Duo bar (give the host the `brightness`); and only an app-level scope reaches dialogs, snack bars, tooltips and menus, which are pushed on the root navigator or inserted in its overlay. Without any of them, nothing changes: the device's brightness is used.
 
 ### AdaptiveButton
 

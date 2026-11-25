@@ -188,10 +188,15 @@ class AdaptiveScaffold extends StatefulWidget {
   /// to prevent native platform views from bleeding through.
   final bool tabBarHidden;
 
-  /// The brightness native components below draw in, or null to follow the
-  /// nearest [AdaptiveBrightness] and then the device. Set it to the app's own
-  /// brightness so a light-mode app on a dark-mode device does not get dark
-  /// native components.
+  /// The brightness this scaffold's body draws in (native views and Cupertino
+  /// fallbacks), or null to follow the nearest [AdaptiveBrightness] and then
+  /// the device. Set it to the app's own brightness so a light-mode app on a
+  /// dark-mode device does not get dark native components.
+  ///
+  /// Under an [AdaptiveToolbarHost] the top toolbar and the Duo bar belong to
+  /// the host, so this does not reach them: give the host the `brightness`.
+  /// Dialogs, snack bars and tooltips are not below the scaffold either; only
+  /// an app-level [AdaptiveBrightness] covers them.
   final Brightness? brightness;
 
   @override
@@ -379,10 +384,17 @@ class _AdaptiveScaffoldState extends State<AdaptiveScaffold> {
   }
 
   @override
-  Widget build(BuildContext context) => AdaptiveBrightness.scoped(
-    brightness: widget.brightness,
+  // The scope is always installed, so the tree keeps its shape when
+  // [AdaptiveScaffold.brightness] goes between null and a value.
+  Widget build(BuildContext context) => AdaptiveBrightness(
+    brightness: _brightness,
     child: _buildScaffold(context),
   );
+
+  /// What the scaffold's own reads use: this context is above the scope that
+  /// [build] installs.
+  Brightness get _brightness =>
+      widget.brightness ?? AdaptiveBrightness.of(context);
 
   Widget _buildScaffold(BuildContext context) {
     final useNativeToolbar = widget.appBar?.useNativeToolbar ?? false;
@@ -638,7 +650,7 @@ class _AdaptiveScaffoldState extends State<AdaptiveScaffold> {
         }
 
         // Wrap body with DefaultTextStyle to ensure proper text color based on brightness
-        final brightness = widget.brightness ?? AdaptiveBrightness.of(context);
+        final brightness = _brightness;
         final textColor = brightness == Brightness.dark
             ? CupertinoColors.white
             : CupertinoColors.black;
@@ -738,7 +750,7 @@ class _AdaptiveScaffoldState extends State<AdaptiveScaffold> {
       }
 
       // Wrap body with DefaultTextStyle to ensure proper text color based on brightness
-      final brightness = widget.brightness ?? AdaptiveBrightness.of(context);
+      final brightness = _brightness;
       final textColor = brightness == Brightness.dark
           ? CupertinoColors.white
           : CupertinoColors.black;

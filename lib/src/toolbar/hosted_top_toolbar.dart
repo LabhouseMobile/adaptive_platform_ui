@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 
+import '../style/adaptive_brightness.dart';
 import '../style/sf_symbol.dart';
 import '../widgets/adaptive_app_bar_action.dart';
 import '../widgets/adaptive_button.dart';
@@ -8,7 +9,6 @@ import '../widgets/ios26/ios26_native_toolbar.dart';
 import 'duo_vertical_bar.dart';
 import 'toolbar_blend.dart';
 import 'toolbar_registry.dart';
-import '../style/adaptive_brightness.dart';
 
 /// Height of the toolbar's content area, excluding the status bar.
 const double kHostedToolbarHeight = 44.0;

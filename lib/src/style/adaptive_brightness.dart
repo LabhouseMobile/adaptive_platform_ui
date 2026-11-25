@@ -1,18 +1,32 @@
 import 'package:flutter/widgets.dart';
 
-/// The brightness the app is drawn in, for the native components.
+/// The brightness this package's widgets are drawn in: the native iOS 26
+/// views (menus, toolbars, tab bars, glass capsules, buttons, alerts, ...) and
+/// the Cupertino fallbacks (cards, tiles, snack bars, tooltips, the scaffold's
+/// default text colour).
 ///
-/// Native iOS 26 components (menus, toolbars, tab bars, glass capsules,
-/// buttons, ...) are told whether to draw light or dark. By default that is
-/// the device's brightness, which is wrong for an app that picks its own: a
-/// light-mode app on a dark-mode device would get dark native components over
-/// a light screen. Place an [AdaptiveBrightness] above them (an app `builder`
-/// is the right place) and they follow it instead.
+/// By default that is the device's brightness, which is wrong for an app that
+/// picks its own: a light-mode app on a dark-mode device would get dark native
+/// components over a light screen. Place an [AdaptiveBrightness] above them
+/// and they follow it instead.
 ///
-/// [AdaptiveToolbarHost], [AdaptiveScaffold], [AdaptiveButton] and
-/// [IOS26GlassCapsule] also take a `brightness` that installs this scope for
-/// their subtree. Without any of them, everything follows the device, as
-/// before.
+/// * Put it above the app's navigator, in `MaterialApp.builder` or
+///   `CupertinoApp.builder`, and wrap [AdaptiveToolbarHost] with it, or give the
+///   host a `brightness`: the host builds the top toolbar and the Duo bar
+///   above its child. Only an app-level scope reaches dialogs, snack bars,
+///   tooltips and menus, which are pushed on the root navigator or inserted in
+///   its overlay.
+/// * Read the app's own brightness: `Theme.of(context).brightness` in a
+///   `MaterialApp`, `CupertinoTheme.brightnessOf(context)` in a `CupertinoApp`.
+/// * [AdaptiveApp] already does this from its `themeMode`; do not add the
+///   scope to its `builder`, which sits above the theme and would force light.
+///
+/// [AdaptiveToolbarHost], [AdaptiveScaffold] and [AdaptiveButton] also take a
+/// `brightness` that installs this scope for their subtree, and
+/// [IOS26GlassCapsule] a `brightness` for its own drawing. Under a host the
+/// top toolbar and the Duo bar are the host's, so an [AdaptiveScaffold]'s
+/// `brightness` covers its body only. Without any of them, everything follows
+/// the device, as before.
 class AdaptiveBrightness extends InheritedWidget {
   const AdaptiveBrightness({
     super.key,
@@ -22,17 +36,6 @@ class AdaptiveBrightness extends InheritedWidget {
 
   /// The brightness native components below are drawn in.
   final Brightness brightness;
-
-  /// Wraps [child] in an [AdaptiveBrightness] when [brightness] is set, and
-  /// returns it untouched (keeping the inherited or device brightness)
-  /// otherwise.
-  static Widget scoped({
-    required Brightness? brightness,
-    required Widget child,
-  }) {
-    if (brightness == null) return child;
-    return AdaptiveBrightness(brightness: brightness, child: child);
-  }
 
   /// The brightness set by the nearest [AdaptiveBrightness], or null when
   /// there is none.
