@@ -112,8 +112,9 @@ class GlassCapsuleItem {
   /// of reporting a tap: the overflow control of the trailing bar.
   final List<GlassCapsuleMenuEntry>? menu;
 
-  /// Drawn on a blue fill with a white symbol, for the primary action of a
-  /// screen, as the system's prominent toolbar button.
+  /// Drawn on a fill in [tint] (blue by default) with a white symbol, for the
+  /// primary action of a screen, as the system's prominent toolbar button.
+  /// Any [IOS26GlassCapsule] draws it so, whatever its axis.
   final bool prominent;
 
   /// Drawn where there is no UIKit (widget tests, other platforms).
@@ -370,7 +371,11 @@ class _IOS26GlassCapsuleState extends State<IOS26GlassCapsule> {
             child: item.canShowNatively
                 ? null
                 : IconTheme.merge(
-                    data: IconThemeData(color: item.tint ?? label),
+                    data: IconThemeData(
+                      color: item.prominent
+                          ? CupertinoColors.white
+                          : item.tint ?? label,
+                    ),
                     child: item.fallback ?? const SizedBox.shrink(),
                   ),
           ),
