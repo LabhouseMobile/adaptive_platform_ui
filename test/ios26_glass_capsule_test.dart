@@ -24,9 +24,9 @@ void main() {
 
     test('widthFactor is omitted at 1 and sent when the slot is closing', () {
       expect(
-        const GlassCapsuleItem(symbol: 'heart')
-            .toNativeMap()
-            .containsKey('widthFactor'),
+        const GlassCapsuleItem(
+          symbol: 'heart',
+        ).toNativeMap().containsKey('widthFactor'),
         isFalse,
       );
       expect(
@@ -58,9 +58,9 @@ void main() {
         'like',
       );
       expect(
-        GlassCapsuleItem.fromAction(action)
-            .toNativeMap()
-            .containsKey('widthFactor'),
+        GlassCapsuleItem.fromAction(
+          action,
+        ).toNativeMap().containsKey('widthFactor'),
         isFalse,
       );
       expect(
@@ -82,15 +82,53 @@ void main() {
 
       expect(GlassCapsuleItem.fromAction(plain).prominent, isFalse);
       expect(
-        GlassCapsuleItem.fromAction(plain)
-            .toNativeMap()
-            .containsKey('prominent'),
+        GlassCapsuleItem.fromAction(
+          plain,
+        ).toNativeMap().containsKey('prominent'),
         isFalse,
       );
       expect(GlassCapsuleItem.fromAction(primary).prominent, isTrue);
       expect(
         GlassCapsuleItem.fromAction(primary).toNativeMap()['prominent'],
         isTrue,
+      );
+    });
+
+    test('fromAction maps the action menu to menu entries', () {
+      final action = AdaptiveAppBarAction(
+        iosSymbol: 'ellipsis',
+        onPressed: () {},
+        menu: [
+          AdaptiveAppBarAction(
+            iosSymbol: 'pencil',
+            label: 'Edit',
+            onPressed: () {},
+          ),
+          AdaptiveAppBarAction(
+            iosSymbol: 'trash',
+            label: 'Delete',
+            isDestructive: true,
+            onPressed: () {},
+          ),
+          AdaptiveAppBarAction(iosSymbol: 'star', onPressed: () {}),
+        ],
+      );
+
+      expect(GlassCapsuleItem.fromAction(action).menu!.map((e) => e.id), [
+        0,
+        1,
+        2,
+      ]);
+      final shifted = GlassCapsuleItem.fromAction(action, menuIdStart: 5).menu!;
+      expect(shifted.map((e) => e.id), [5, 6, 7]);
+      expect(shifted.map((e) => e.title), ['Edit', 'Delete', '']);
+      expect(shifted.map((e) => e.symbol), ['pencil', 'trash', 'star']);
+      expect(shifted.map((e) => e.isDestructive), [false, true, false]);
+      expect(
+        GlassCapsuleItem.fromAction(
+          AdaptiveAppBarAction(iosSymbol: 'plus', onPressed: () {}),
+        ).menu,
+        isNull,
       );
     });
 

@@ -525,6 +525,79 @@ void main() {
       expect(more.menu!.map((e) => e.title), ['Search', 'Folder', 'Delete']);
     });
 
+    testWidgets(
+      'an action with a menu opens it, and its entries are reachable',
+      (tester) async {
+        tester.view.physicalSize = duoLandscape;
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.reset);
+        final chosen = <String>[];
+        AdaptiveAppBarAction entry(String name) => AdaptiveAppBarAction(
+          iosSymbol: 'symbol.$name',
+          label: name,
+          onPressed: () => chosen.add(name),
+        );
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: MediaQuery(
+              data: const MediaQueryData(
+                size: duoLandscape,
+                padding: duoPadding,
+                viewPadding: duoPadding,
+              ),
+              child: Align(
+                alignment: Alignment.topRight,
+                child: SizedBox(
+                  width: poseOf(duoPadding).bandWidth,
+                  height: 400,
+                  child: DuoVerticalBar(
+                    actions: [
+                      AdaptiveAppBarAction(
+                        icon: Icons.add,
+                        iosSymbol: 'plus',
+                        onPressed: () => chosen.add('plain'),
+                      ),
+                      AdaptiveAppBarAction(
+                        icon: Icons.folder,
+                        iosSymbol: 'folder',
+                        onPressed: () => chosen.add('first tapped'),
+                        menu: [entry('Rename'), entry('Move')],
+                      ),
+                      AdaptiveAppBarAction(
+                        icon: Icons.share,
+                        iosSymbol: 'share',
+                        onPressed: () => chosen.add('second tapped'),
+                        menu: [entry('Export')],
+                      ),
+                    ],
+                    regions: const [duoCamera],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+
+        expect(tester.takeException(), isNull);
+        // All three share one capsule, so the entry ids run on across items.
+        final capsule = tester
+            .widgetList<IOS26GlassCapsule>(find.byType(IOS26GlassCapsule))
+            .singleWhere((c) => c.items.length == 3);
+        expect(capsule.items.map((i) => i.menu?.map((e) => e.id).toList()), [
+          null,
+          [0, 1],
+          [2],
+        ]);
+
+        capsule.onMenuTap!(1);
+        capsule.onMenuTap!(2);
+        capsule.onMenuTap!(0);
+        capsule.onMenuTap!(9);
+        expect(chosen, ['Move', 'Export', 'Rename']);
+      },
+    );
+
     testWidgets('the title sits at the leading edge', (tester) async {
       tester.view.physicalSize = duoLandscape;
       tester.view.devicePixelRatio = 1;
