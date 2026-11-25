@@ -124,6 +124,11 @@ class iOS26GlassCapsuleView: NSObject, FlutterPlatformView {
     private var selectedIndex: Int?
     private var tint: UIColor?
     private var inset: CGFloat = 0
+
+    /// How far the fill of a prominent item sits from the capsule's edge, and
+    /// the room its title keeps inside it.
+    private static let prominentFillInsets = NSDirectionalEdgeInsets(
+        top: 3, leading: 3, bottom: 3, trailing: 3)
     private var stackTop: NSLayoutConstraint?
     private var stackBottom: NSLayoutConstraint?
     private var stackLeading: NSLayoutConstraint?
@@ -643,17 +648,18 @@ class iOS26GlassCapsuleView: NSObject, FlutterPlatformView {
 
             var config: UIButton.Configuration
             if prominent {
-                // The primary action: a blue fill, inset from the capsule's
-                // edge like the tab selection, with a white symbol.
+                // The primary action: a fill in the tint (blue by default),
+                // inset from the capsule's edge like the tab selection, with
+                // a white symbol.
                 config = UIButton.Configuration.filled()
                 config.cornerStyle = .capsule
-                config.baseBackgroundColor = .systemBlue
-                config.background.backgroundInsets = NSDirectionalEdgeInsets(
-                    top: 3, leading: 3, bottom: 3, trailing: 3)
+                config.baseBackgroundColor = itemTint ?? tint ?? .systemBlue
+                config.background.backgroundInsets = Self.prominentFillInsets
             } else {
                 config = UIButton.Configuration.plain()
             }
-            config.contentInsets = .zero
+            // A title lays out inside the fill, not across the whole button.
+            config.contentInsets = prominent ? Self.prominentFillInsets : .zero
             let symbolConfiguration = UIImage.SymbolConfiguration(
                 pointSize: symbolPointSize, weight: symbolImageWeight)
             config.preferredSymbolConfigurationForImage = symbolConfiguration

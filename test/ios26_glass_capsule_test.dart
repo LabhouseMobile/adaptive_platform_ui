@@ -1,4 +1,5 @@
 import 'package:adaptive_platform_ui/adaptive_platform_ui.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -23,9 +24,9 @@ void main() {
 
     test('widthFactor is omitted at 1 and sent when the slot is closing', () {
       expect(
-        const GlassCapsuleItem(
-          symbol: 'heart',
-        ).toNativeMap().containsKey('widthFactor'),
+        const GlassCapsuleItem(symbol: 'heart')
+            .toNativeMap()
+            .containsKey('widthFactor'),
         isFalse,
       );
       expect(
@@ -57,9 +58,9 @@ void main() {
         'like',
       );
       expect(
-        GlassCapsuleItem.fromAction(
-          action,
-        ).toNativeMap().containsKey('widthFactor'),
+        GlassCapsuleItem.fromAction(action)
+            .toNativeMap()
+            .containsKey('widthFactor'),
         isFalse,
       );
       expect(
@@ -69,6 +70,66 @@ void main() {
         ).toNativeMap()['widthFactor'],
         .5,
       );
+    });
+
+    test('a prominent action reaches the native capsule as prominent', () {
+      final plain = AdaptiveAppBarAction(iosSymbol: 'plus', onPressed: () {});
+      final primary = AdaptiveAppBarAction(
+        iosSymbol: 'checkmark',
+        prominent: true,
+        onPressed: () {},
+      );
+
+      expect(GlassCapsuleItem.fromAction(plain).prominent, isFalse);
+      expect(
+        GlassCapsuleItem.fromAction(plain)
+            .toNativeMap()
+            .containsKey('prominent'),
+        isFalse,
+      );
+      expect(GlassCapsuleItem.fromAction(primary).prominent, isTrue);
+      expect(
+        GlassCapsuleItem.fromAction(primary).toNativeMap()['prominent'],
+        isTrue,
+      );
+    });
+
+    testWidgets('a prominent item with only a Flutter icon gets a white icon', (
+      tester,
+    ) async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+      try {
+        Future<Color?> iconColor({required bool prominent, Color? tint}) async {
+          await tester.pumpWidget(
+            _host(
+              SizedBox(
+                width: IOS26GlassCapsule.width,
+                height: IOS26GlassCapsule.height,
+                child: IOS26GlassCapsule(
+                  key: UniqueKey(),
+                  items: [
+                    GlassCapsuleItem(
+                      prominent: prominent,
+                      tint: tint,
+                      fallback: const Icon(Icons.check),
+                    ),
+                  ],
+                  onTap: (_) {},
+                ),
+              ),
+            ),
+          );
+          return IconTheme.of(tester.element(find.byIcon(Icons.check))).color;
+        }
+
+        expect(
+          await iconColor(prominent: true, tint: CupertinoColors.systemBlue),
+          CupertinoColors.white,
+        );
+        expect(await iconColor(prominent: false), isNot(CupertinoColors.white));
+      } finally {
+        debugDefaultTargetPlatformOverride = null;
+      }
     });
 
     testWidgets('sends symbol size and weight only when they are set', (
