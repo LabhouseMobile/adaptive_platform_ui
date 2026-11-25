@@ -5,6 +5,8 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../style/adaptive_brightness.dart';
+
 /// Native iOS 26 segmented control implementation using platform views
 class IOS26SegmentedControl extends StatefulWidget {
   const IOS26SegmentedControl({
@@ -95,7 +97,8 @@ class _IOS26SegmentedControlState extends State<IOS26SegmentedControl> {
   }
 
   Brightness _effectiveBrightness() {
-    return CupertinoTheme.of(context).brightness ??
+    return AdaptiveBrightness.maybeOf(context) ??
+        CupertinoTheme.of(context).brightness ??
         Theme.of(context).brightness;
   }
 

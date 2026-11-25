@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../platform/platform_info.dart';
+import '../style/adaptive_brightness.dart';
 
 /// An adaptive checkbox that renders platform-specific checkbox styles
 ///
@@ -127,7 +128,7 @@ class _IOSCheckbox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final brightness = MediaQuery.platformBrightnessOf(context);
+    final brightness = AdaptiveBrightness.of(context);
     final isDark = brightness == Brightness.dark;
     final effectiveCheckColor = checkColor ?? CupertinoColors.white;
     final backgroundColor = isDark

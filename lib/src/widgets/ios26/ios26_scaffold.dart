@@ -14,6 +14,7 @@ import '../adaptive_button.dart';
 import '../adaptive_scaffold.dart';
 import 'ios26_native_tab_bar.dart';
 import 'ios26_native_toolbar.dart';
+import '../../style/adaptive_brightness.dart';
 
 /// Height of the iOS 26 Liquid Glass toolbar's content area (excluding the
 /// status bar), matching [IOS26NativeToolbar]'s default height. The toolbar is
@@ -248,7 +249,7 @@ class _IOS26ScaffoldState extends State<IOS26Scaffold>
     final showNativeView = isCurrentRoute || isPopping;
 
     // Get brightness and determine text color
-    final brightness = MediaQuery.platformBrightnessOf(context);
+    final brightness = AdaptiveBrightness.of(context);
     final textColor = brightness == Brightness.dark
         ? CupertinoColors.white
         : CupertinoColors.black;

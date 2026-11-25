@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../platform/platform_info.dart';
+import '../style/adaptive_brightness.dart';
 
 /// An adaptive tooltip that renders platform-specific tooltip styles
 ///
@@ -258,7 +259,7 @@ class _TooltipOverlayState extends State<_TooltipOverlay>
 
   @override
   Widget build(BuildContext context) {
-    final brightness = MediaQuery.platformBrightnessOf(context);
+    final brightness = AdaptiveBrightness.of(context);
     final isDark = brightness == Brightness.dark;
 
     // Calculate tooltip position

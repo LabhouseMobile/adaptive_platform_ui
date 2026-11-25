@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import '../adaptive_scaffold.dart';
+import '../../style/adaptive_brightness.dart';
 
 /// Native iOS 26 tab bar using UITabBar platform view
 class IOS26NativeTabBar extends StatefulWidget {
@@ -66,7 +67,7 @@ class _IOS26NativeTabBarState extends State<IOS26NativeTabBar> {
   bool? _lastHidden;
 
   bool get _isDark =>
-      MediaQuery.platformBrightnessOf(context) == Brightness.dark;
+      AdaptiveBrightness.of(context) == Brightness.dark;
   bool get _isRtl => Directionality.of(context) == TextDirection.rtl;
   Color? get _effectiveTint =>
       widget.tint ?? CupertinoTheme.of(context).primaryColor;
@@ -96,7 +97,7 @@ class _IOS26NativeTabBarState extends State<IOS26NativeTabBar> {
     Color resolvedColor = color;
     if (color is CupertinoDynamicColor) {
       // Resolve based on current brightness
-      final brightness = MediaQuery.platformBrightnessOf(context);
+      final brightness = AdaptiveBrightness.of(context);
       resolvedColor = brightness == Brightness.dark
           ? color.darkColor
           : color.color;

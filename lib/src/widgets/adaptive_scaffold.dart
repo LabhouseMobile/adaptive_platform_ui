@@ -1,6 +1,7 @@
 import 'package:adaptive_platform_ui/src/widgets/ios26/ios26_native_tab_bar.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+
 import '../platform/platform_info.dart';
 import '../style/sf_symbol.dart';
 import 'adaptive_app_bar.dart';
@@ -10,6 +11,7 @@ import 'adaptive_button.dart';
 import 'ios26/ios26_scaffold.dart';
 import '../toolbar/toolbar_chrome_scope.dart';
 import '../toolbar/toolbar_registry.dart';
+import '../style/adaptive_brightness.dart';
 
 /// Navigation destination for bottom navigation
 class AdaptiveNavigationDestination {
@@ -95,6 +97,7 @@ class AdaptiveScaffold extends StatefulWidget {
     this.useHeroBackButton = true,
     this.useFixedToolbar = true,
     this.tabBarHidden = false,
+    this.brightness,
   });
 
   /// App bar configuration
@@ -185,6 +188,17 @@ class AdaptiveScaffold extends StatefulWidget {
   /// Use this to hide the tab bar when showing modal bottom sheets
   /// to prevent native platform views from bleeding through.
   final bool tabBarHidden;
+
+  /// The brightness this scaffold's body draws in (native views and Cupertino
+  /// fallbacks), or null to follow the nearest [AdaptiveBrightness] and then
+  /// the device. Set it to the app's own brightness so a light-mode app on a
+  /// dark-mode device does not get dark native components.
+  ///
+  /// Under an [AdaptiveToolbarHost] the top toolbar and the Duo bar belong to
+  /// the host, so this does not reach them: give the host the `brightness`.
+  /// Dialogs, snack bars and tooltips are not below the scaffold either; only
+  /// an app-level [AdaptiveBrightness] covers them.
+  final Brightness? brightness;
 
   @override
   State<AdaptiveScaffold> createState() => _AdaptiveScaffoldState();
@@ -371,7 +385,19 @@ class _AdaptiveScaffoldState extends State<AdaptiveScaffold> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  // The scope is always installed, so the tree keeps its shape when
+  // [AdaptiveScaffold.brightness] goes between null and a value.
+  Widget build(BuildContext context) => AdaptiveBrightness(
+    brightness: widget.brightness ?? AdaptiveBrightness.maybeOf(context),
+    child: _buildScaffold(context),
+  );
+
+  /// What the scaffold's own reads use: this context is above the scope that
+  /// [build] installs.
+  Brightness get _brightness =>
+      widget.brightness ?? AdaptiveBrightness.of(context);
+
+  Widget _buildScaffold(BuildContext context) {
     final useNativeToolbar = widget.appBar?.useNativeToolbar ?? false;
     final useNativeBottomBar =
         widget.bottomNavigationBar?.useNativeBottomBar ?? true;
@@ -625,7 +651,7 @@ class _AdaptiveScaffoldState extends State<AdaptiveScaffold> {
         }
 
         // Wrap body with DefaultTextStyle to ensure proper text color based on brightness
-        final brightness = MediaQuery.platformBrightnessOf(context);
+        final brightness = _brightness;
         final textColor = brightness == Brightness.dark
             ? CupertinoColors.white
             : CupertinoColors.black;
@@ -725,7 +751,7 @@ class _AdaptiveScaffoldState extends State<AdaptiveScaffold> {
       }
 
       // Wrap body with DefaultTextStyle to ensure proper text color based on brightness
-      final brightness = MediaQuery.platformBrightnessOf(context);
+      final brightness = _brightness;
       final textColor = brightness == Brightness.dark
           ? CupertinoColors.white
           : CupertinoColors.black;
@@ -769,9 +795,8 @@ class _AdaptiveScaffoldState extends State<AdaptiveScaffold> {
           title: _buildAppBarTitle(
             crossAxisAlignment: CrossAxisAlignment.start,
             subtitleFontSize: 13,
-            subtitleColor: Theme.of(
-              context,
-            ).textTheme.bodySmall?.color?.withValues(alpha: 0.7),
+            subtitleColor: Theme.of(context).textTheme.bodySmall?.color
+                ?.withValues(alpha: 0.7),
           ),
           centerTitle: widget.appBar!.titleWidget != null,
           actions: widget.appBar!.actions?.map((action) {
@@ -872,9 +897,8 @@ class _AdaptiveScaffoldState extends State<AdaptiveScaffold> {
         title: _buildAppBarTitle(
           crossAxisAlignment: CrossAxisAlignment.start,
           subtitleFontSize: 13,
-          subtitleColor: Theme.of(
-            context,
-          ).textTheme.bodySmall?.color?.withValues(alpha: 0.7),
+          subtitleColor: Theme.of(context).textTheme.bodySmall?.color
+              ?.withValues(alpha: 0.7),
         ),
         centerTitle: widget.appBar!.titleWidget != null,
         actions: widget.appBar!.actions?.map((action) {

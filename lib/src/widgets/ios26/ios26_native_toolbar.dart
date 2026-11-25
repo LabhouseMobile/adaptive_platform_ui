@@ -4,6 +4,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import '../../utils/animation.dart';
 import '../adaptive_app_bar_action.dart';
+import '../../style/adaptive_brightness.dart';
 
 /// Native iOS 26 UINavigationBar widget using platform views
 /// Implements Liquid Glass design with native blur effects
@@ -72,13 +73,13 @@ class _IOS26NativeToolbarState extends State<IOS26NativeToolbar> {
   List<AdaptiveAppBarAction>? _lastActions;
 
   bool get _isDark =>
-      MediaQuery.platformBrightnessOf(context) == Brightness.dark;
+      AdaptiveBrightness.of(context) == Brightness.dark;
 
   int _colorToARGB(Color color) {
     // Resolve CupertinoDynamicColor if needed
     Color resolvedColor = color;
     if (color is CupertinoDynamicColor) {
-      final brightness = MediaQuery.platformBrightnessOf(context);
+      final brightness = AdaptiveBrightness.of(context);
       resolvedColor =
           brightness == Brightness.dark ? color.darkColor : color.color;
     }

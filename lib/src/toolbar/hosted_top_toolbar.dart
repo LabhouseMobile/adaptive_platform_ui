@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 
+import '../style/adaptive_brightness.dart';
 import '../style/sf_symbol.dart';
 import '../widgets/adaptive_app_bar_action.dart';
 import '../widgets/adaptive_button.dart';
@@ -285,38 +286,40 @@ class HostedTopToolbar extends StatelessWidget {
       opacity: opacity,
       child: IgnorePointer(
         ignoring: !interactive,
-        child: titleOnly
-            // On iPhone Duo the title sits at the leading edge and the
-            // controls are in the trailing bar, so there is no bar to draw.
-            ? DuoToolbarTitle(
-                title: content.title,
-                titleWidget: content.titleOverlay,
-              )
-            : defaultTargetPlatform == TargetPlatform.iOS
-            ? IOS26NativeToolbar(
-                // The safe area is read once, when the native view is made.
-                key: ValueKey<bool>(inStrip),
-                ignoresSafeArea: inStrip,
-                title: content.title,
-                titleWidget: content.titleOverlay,
-                leading: content.customLeading,
-                actions: actions,
-                tintColor: content.tint,
-                showsGradient: false,
-                onActionTap: (index) {
-                  if (index >= 0 && index < actions.length) {
-                    actions[index].onPressed();
-                  }
-                },
-                onMenuActionTap: (index, entry) {
-                  if (index < 0 || index >= actions.length) return;
-                  final menu = actions[index].menu;
-                  if (menu != null && entry >= 0 && entry < menu.length) {
-                    menu[entry].onPressed();
-                  }
-                },
-              )
-            : _FallbackBar(content: content, actions: actions),
+        child: _ChromeTextStyle(
+          child: titleOnly
+              // On iPhone Duo the title sits at the leading edge and the
+              // controls are in the trailing bar, so there is no bar to draw.
+              ? DuoToolbarTitle(
+                  title: content.title,
+                  titleWidget: content.titleOverlay,
+                )
+              : defaultTargetPlatform == TargetPlatform.iOS
+              ? IOS26NativeToolbar(
+                  // The safe area is read once, when the native view is made.
+                  key: ValueKey<bool>(inStrip),
+                  ignoresSafeArea: inStrip,
+                  title: content.title,
+                  titleWidget: content.titleOverlay,
+                  leading: content.customLeading,
+                  actions: actions,
+                  tintColor: content.tint,
+                  showsGradient: false,
+                  onActionTap: (index) {
+                    if (index >= 0 && index < actions.length) {
+                      actions[index].onPressed();
+                    }
+                  },
+                  onMenuActionTap: (index, entry) {
+                    if (index < 0 || index >= actions.length) return;
+                    final menu = actions[index].menu;
+                    if (menu != null && entry >= 0 && entry < menu.length) {
+                      menu[entry].onPressed();
+                    }
+                  },
+                )
+              : _FallbackBar(content: content, actions: actions),
+        ),
       ),
     );
   }
@@ -336,6 +339,27 @@ class HostedTopToolbar extends StatelessWidget {
   }
 }
 
+/// The text style of the bar. It is drawn above the app's navigator, where no
+/// Material or Cupertino widget has set one yet, so a title would otherwise
+/// inherit the `WidgetsApp` fallback: red monospace with a yellow double
+/// underline. The titles set their size, weight and colour but not the
+/// decoration.
+class _ChromeTextStyle extends StatelessWidget {
+  const _ChromeTextStyle({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => DefaultTextStyle(
+    style: TextStyle(
+      fontSize: 17,
+      color: CupertinoColors.label.resolveFrom(context),
+      decoration: TextDecoration.none,
+    ),
+    child: child,
+  );
+}
+
 /// The soft gradient that keeps the bar readable over scrolling content.
 class _Backdrop extends StatelessWidget {
   const _Backdrop({required this.height});
@@ -345,7 +369,7 @@ class _Backdrop extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dark = MediaQuery.platformBrightnessOf(context) == Brightness.dark;
+    final dark = AdaptiveBrightness.of(context) == Brightness.dark;
     final base = dark ? const Color(0xFF000000) : const Color(0xFFFFFFFF);
     return IgnorePointer(
       child: OverflowBox(

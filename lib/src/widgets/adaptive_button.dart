@@ -1,6 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+
 import '../platform/platform_info.dart';
+import '../style/adaptive_brightness.dart';
 import '../style/sf_symbol.dart';
 import 'ios26/ios26_button.dart';
 
@@ -35,6 +37,7 @@ class AdaptiveButton extends StatelessWidget {
     this.enabled = true,
     this.useSmoothRectangleBorder = true,
     this.useNative = true,
+    this.brightness,
   }) : child = null,
        icon = null,
        iconColor = null,
@@ -54,6 +57,7 @@ class AdaptiveButton extends StatelessWidget {
     this.enabled = true,
     this.useSmoothRectangleBorder = true,
     this.useNative = true,
+    this.brightness,
   }) : label = null,
        textColor = null,
        icon = null,
@@ -75,6 +79,7 @@ class AdaptiveButton extends StatelessWidget {
     this.enabled = true,
     this.useSmoothRectangleBorder = true,
     this.useNative = true,
+    this.brightness,
   }) : label = null,
        textColor = null,
        child = null,
@@ -94,6 +99,7 @@ class AdaptiveButton extends StatelessWidget {
     this.enabled = true,
     this.useSmoothRectangleBorder = true,
     this.useNative = true,
+    this.brightness,
   }) : label = null,
        textColor = null,
        child = null,
@@ -156,8 +162,21 @@ class AdaptiveButton extends StatelessWidget {
   /// Android always uses Material button regardless of this setting
   final bool useNative;
 
+  /// The brightness native components below draw in, or null to follow the
+  /// nearest [AdaptiveBrightness] and then the device. Set it to the app's own
+  /// brightness so a light-mode app on a dark-mode device does not get dark
+  /// native components.
+  final Brightness? brightness;
+
   @override
-  Widget build(BuildContext context) {
+  // The scope is always installed, so the tree keeps its shape when
+  // [brightness] goes between null and a value.
+  Widget build(BuildContext context) => AdaptiveBrightness(
+    brightness: brightness ?? AdaptiveBrightness.maybeOf(context),
+    child: _buildButton(context),
+  );
+
+  Widget _buildButton(BuildContext context) {
     // iOS 26+ - Use native iOS 26 button design (only if useNative is true)
     if (useNative && PlatformInfo.isIOS26OrHigher()) {
       // SF Symbol mode - use native SF Symbol rendering

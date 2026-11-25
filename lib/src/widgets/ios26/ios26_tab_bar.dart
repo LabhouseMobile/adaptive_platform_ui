@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import '../adaptive_scaffold.dart';
+import '../../style/adaptive_brightness.dart';
 
 /// iOS 26 styled tab bar with Liquid Glass effect
 class IOS26TabBar extends StatelessWidget implements PreferredSizeWidget {
@@ -20,7 +21,7 @@ class IOS26TabBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
-    final brightness = MediaQuery.platformBrightnessOf(context);
+    final brightness = AdaptiveBrightness.of(context);
     final isDark = brightness == Brightness.dark;
 
     return Container(
@@ -76,7 +77,7 @@ class _TabBarItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final brightness = MediaQuery.platformBrightnessOf(context);
+    final brightness = AdaptiveBrightness.of(context);
     final isDark = brightness == Brightness.dark;
 
     final iconColor = isSelected

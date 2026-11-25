@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import '../../style/sf_symbol.dart';
+import '../../style/adaptive_brightness.dart';
 
 /// iOS 26 native button styles (Liquid Glass design)
 enum IOS26ButtonStyle {
@@ -196,7 +197,7 @@ class _IOS26ButtonState extends State<IOS26Button> {
   }
 
   Future<void> _syncBrightnessIfNeeded() async {
-    final isDark = MediaQuery.platformBrightnessOf(context) == Brightness.dark;
+    final isDark = AdaptiveBrightness.of(context) == Brightness.dark;
     if (_lastIsDark != isDark) {
       try {
         await _channel.invokeMethod('setBrightness', {'isDark': isDark});
@@ -272,7 +273,7 @@ class _IOS26ButtonState extends State<IOS26Button> {
       'textColor': widget.textColor != null
           ? _colorToHex(widget.textColor!)
           : null,
-      'isDark': MediaQuery.platformBrightnessOf(context) == Brightness.dark,
+      'isDark': AdaptiveBrightness.of(context) == Brightness.dark,
       'useSmoothRectangleBorder': widget.useSmoothRectangleBorder,
       if (widget.sfSymbol != null) ..._iconParams(widget.sfSymbol!),
     };

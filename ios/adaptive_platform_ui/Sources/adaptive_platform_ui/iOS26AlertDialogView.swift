@@ -175,6 +175,11 @@ class iOS26AlertDialogView: NSObject, FlutterPlatformView {
 
         guard let alert = alertController else { return }
 
+        // The alert is presented on the window's top view controller, so it
+        // would inherit the device's style: draw it in the brightness Flutter
+        // sent, not only its blur.
+        alert.overrideUserInterfaceStyle = isDark ? .dark : .light
+
         // Apply liquid glass styling for iOS 15+
         if #available(iOS 15.0, *) {
             // Configure with iOS corner radius and continuous curve
@@ -409,12 +414,7 @@ class iOS26AlertDialogView: NSObject, FlutterPlatformView {
             let style = index < actionStyles.count ? actionStyles[index] : "defaultAction"
             let enabled = index < actionEnabled.count ? actionEnabled[index] : true
 
-            let isDarkMode: Bool
-            if #available(iOS 13.0, *) {
-                isDarkMode = alert.traitCollection.userInterfaceStyle == .dark
-            } else {
-                isDarkMode = false
-            }
+            let isDarkMode = isDark
 
             let alertActionStyle: UIAlertAction.Style
             var textColor: UIColor?
@@ -565,6 +565,10 @@ class iOS26AlertDialogView: NSObject, FlutterPlatformView {
 
     private func updateBrightness(isDark: Bool) {
         guard let alert = alertController else { return }
+
+        // Colours given to the actions when the alert was made stay as they
+        // were; the system's own text and buttons follow the new style.
+        alert.overrideUserInterfaceStyle = isDark ? .dark : .light
 
         if #available(iOS 15.0, *) {
             if alertStyle == "glass" {

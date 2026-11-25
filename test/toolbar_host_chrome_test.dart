@@ -1201,4 +1201,43 @@ void main() {
       expect(tester.getTopLeft(bodyText).dx, kDuoVerticalBarWidth);
     });
   });
+
+  testWidgets(
+    'the title in the bar is not drawn with the WidgetsApp fallback',
+    (tester) async {
+      useDuoLandscape(tester);
+      // What a WidgetsApp leaves above its navigator for text with no Material.
+      const fallback = TextStyle(
+        color: Color(0xD0FF0000),
+        fontFamily: 'monospace',
+        fontSize: 48,
+        decoration: TextDecoration.underline,
+        decorationStyle: TextDecorationStyle.double,
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          builder: (context, child) => DefaultTextStyle(
+            style: fallback,
+            child: AdaptiveToolbarHost(
+              debugFold: duoInnerDisplay(),
+              child: child!,
+            ),
+          ),
+          home: page('Home'),
+        ),
+      );
+      await tester.pump();
+
+      final style = DefaultTextStyle.of(
+        tester.element(
+          find.descendant(
+            of: find.byType(DuoToolbarTitle),
+            matching: find.text('Home'),
+          ),
+        ),
+      ).style;
+      expect(style.decoration, TextDecoration.none);
+      expect(style.fontFamily, isNull);
+    },
+  );
 }
