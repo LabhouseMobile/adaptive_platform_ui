@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../platform/platform_info.dart';
+import '../style/adaptive_brightness.dart';
 
 /// An adaptive list tile that renders platform-specific styles
 ///
@@ -75,7 +76,7 @@ class AdaptiveListTile extends StatelessWidget {
   }
 
   Widget _buildCupertinoListTile(BuildContext context) {
-    final isDark = MediaQuery.platformBrightnessOf(context) == Brightness.dark;
+    final isDark = AdaptiveBrightness.of(context) == Brightness.dark;
 
     Widget child = Container(
       padding:

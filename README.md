@@ -255,6 +255,21 @@ MaterialApp(
 Without a host every page draws its own toolbar, as before.
 
 
+### AdaptiveBrightness
+
+Native iOS 26 components are drawn light or dark to match the device. An app that picks its own brightness, say light while the device is dark, should say so, or it gets dark native menus and bars over a light screen:
+
+```dart
+MaterialApp(
+  builder: (context, child) => AdaptiveBrightness(
+    brightness: Theme.of(context).brightness,
+    child: child ?? const SizedBox.shrink(),
+  ),
+);
+```
+
+`AdaptiveToolbarHost`, `AdaptiveScaffold`, `AdaptiveButton` and `IOS26GlassCapsule` also take a `brightness` that applies to their own subtree. Without either, nothing changes: the device's brightness is used.
+
 ### AdaptiveButton
 
 <img src="https://raw.githubusercontent.com/berkaycatak/adaptive_platform_ui/refs/heads/main/img/buttons_p.png" alt="iOS 26 Native Toolbar">

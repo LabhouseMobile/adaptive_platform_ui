@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:adaptive_platform_ui/src/platform/platform_info.dart';
+import '../style/adaptive_brightness.dart';
 
 /// A platform-adaptive expansion tile widget that provides expandable/collapsible content.
 ///
@@ -169,7 +170,7 @@ class _AdaptiveExpansionTileState extends State<AdaptiveExpansionTile>
   }
 
   Widget _buildIOSExpansionTile(BuildContext context) {
-    final isDark = MediaQuery.platformBrightnessOf(context) == Brightness.dark;
+    final isDark = AdaptiveBrightness.of(context) == Brightness.dark;
 
     final effectiveBackgroundColor = _isExpanded
         ? (widget.backgroundColor ??

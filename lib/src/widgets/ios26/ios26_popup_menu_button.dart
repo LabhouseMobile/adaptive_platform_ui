@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
+import '../../style/adaptive_brightness.dart';
 
 /// Placeholder width used for a text/standard popup button when it is laid out
 /// in an unbounded-width context before its native intrinsic width has been
@@ -185,7 +186,7 @@ class _IOS26PopupMenuButtonState<T> extends State<IOS26PopupMenuButton<T>> {
   double? _intrinsicWidth;
 
   bool get _isDark =>
-      MediaQuery.platformBrightnessOf(context) == Brightness.dark;
+      AdaptiveBrightness.of(context) == Brightness.dark;
   Color? get _effectiveTint =>
       widget.tint ?? CupertinoTheme.of(context).primaryColor;
 

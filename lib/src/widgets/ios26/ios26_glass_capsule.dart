@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 
 import '../adaptive_app_bar_action.dart';
 import '../adaptive_scaffold.dart';
+import '../../style/adaptive_brightness.dart';
 
 /// One control inside an [IOS26GlassCapsule].
 @immutable
@@ -193,10 +194,18 @@ class IOS26GlassCapsule extends StatefulWidget {
     this.axis = Axis.vertical,
     this.symbolSize,
     this.symbolWeight,
+    this.brightness,
   });
 
   final List<GlassCapsuleItem> items;
   final ValueChanged<int> onTap;
+
+  /// The brightness native components below draw in, or null to follow the
+  /// nearest [AdaptiveBrightness] and then the device. Set it to the app's own
+  /// brightness so a light-mode app on a dark-mode device does not get dark
+  /// native components.
+  final Brightness? brightness;
+
 
   /// Called with the [GlassCapsuleMenuEntry.id] chosen from an item's menu.
   final ValueChanged<int>? onMenuTap;
@@ -265,7 +274,7 @@ class _IOS26GlassCapsuleState extends State<IOS26GlassCapsule> {
   Map<String, dynamic>? _sent;
 
   bool get _isDark =>
-      MediaQuery.platformBrightnessOf(context) == Brightness.dark;
+      (widget.brightness ?? AdaptiveBrightness.of(context)) == Brightness.dark;
 
   Map<String, dynamic> get _params {
     final tint = widget.tint == null

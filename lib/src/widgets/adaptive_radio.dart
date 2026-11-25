@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../platform/platform_info.dart';
+import '../style/adaptive_brightness.dart';
 
 /// An adaptive radio button that renders platform-specific radio styles
 ///
@@ -131,7 +132,7 @@ class _IOSRadio<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final brightness = MediaQuery.platformBrightnessOf(context);
+    final brightness = AdaptiveBrightness.of(context);
     final isDark = brightness == Brightness.dark;
 
     return GestureDetector(

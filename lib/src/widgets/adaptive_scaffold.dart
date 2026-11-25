@@ -10,6 +10,7 @@ import 'adaptive_button.dart';
 import 'ios26/ios26_scaffold.dart';
 import '../toolbar/toolbar_chrome_scope.dart';
 import '../toolbar/toolbar_registry.dart';
+import '../style/adaptive_brightness.dart';
 
 /// Navigation destination for bottom navigation
 class AdaptiveNavigationDestination {
@@ -95,6 +96,7 @@ class AdaptiveScaffold extends StatefulWidget {
     this.useHeroBackButton = true,
     this.useFixedToolbar = true,
     this.tabBarHidden = false,
+    this.brightness,
   });
 
   /// App bar configuration
@@ -185,6 +187,12 @@ class AdaptiveScaffold extends StatefulWidget {
   /// Use this to hide the tab bar when showing modal bottom sheets
   /// to prevent native platform views from bleeding through.
   final bool tabBarHidden;
+
+  /// The brightness native components below draw in, or null to follow the
+  /// nearest [AdaptiveBrightness] and then the device. Set it to the app's own
+  /// brightness so a light-mode app on a dark-mode device does not get dark
+  /// native components.
+  final Brightness? brightness;
 
   @override
   State<AdaptiveScaffold> createState() => _AdaptiveScaffoldState();
@@ -371,7 +379,12 @@ class _AdaptiveScaffoldState extends State<AdaptiveScaffold> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => AdaptiveBrightness.scoped(
+    brightness: widget.brightness,
+    child: _buildScaffold(context),
+  );
+
+  Widget _buildScaffold(BuildContext context) {
     final useNativeToolbar = widget.appBar?.useNativeToolbar ?? false;
     final useNativeBottomBar =
         widget.bottomNavigationBar?.useNativeBottomBar ?? true;
@@ -625,7 +638,7 @@ class _AdaptiveScaffoldState extends State<AdaptiveScaffold> {
         }
 
         // Wrap body with DefaultTextStyle to ensure proper text color based on brightness
-        final brightness = MediaQuery.platformBrightnessOf(context);
+        final brightness = widget.brightness ?? AdaptiveBrightness.of(context);
         final textColor = brightness == Brightness.dark
             ? CupertinoColors.white
             : CupertinoColors.black;
@@ -725,7 +738,7 @@ class _AdaptiveScaffoldState extends State<AdaptiveScaffold> {
       }
 
       // Wrap body with DefaultTextStyle to ensure proper text color based on brightness
-      final brightness = MediaQuery.platformBrightnessOf(context);
+      final brightness = widget.brightness ?? AdaptiveBrightness.of(context);
       final textColor = brightness == Brightness.dark
           ? CupertinoColors.white
           : CupertinoColors.black;

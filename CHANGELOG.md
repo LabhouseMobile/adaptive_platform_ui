@@ -1,6 +1,7 @@
 # Changelog
 
 ## [Unreleased]
+* **FIX**: Native iOS 26 components (menus, toolbars, tab bars, glass capsules, buttons, switches, sliders, segmented controls, alerts) no longer follow only the device's brightness. A light-mode app on a dark-mode device used to get dark native components over a light screen. Wrap the app in the new `AdaptiveBrightness` (an app `builder` is the place) and they follow it; `AdaptiveToolbarHost`, `AdaptiveScaffold`, `AdaptiveButton` and `IOS26GlassCapsule` also take a `brightness` for their own subtree. Without either, everything keeps following the device
 * **NEW**: iPhone Duo: an action with `prominent: true` is now drawn in the vertical bar on a blue fill with a white symbol, as the system's prominent toolbar button. Until now `prominent` only applied to the native top toolbar and was ignored in the vertical bar. Actions that move into the overflow menu stay plain entries
 
 ## [1.0.1-lh7]

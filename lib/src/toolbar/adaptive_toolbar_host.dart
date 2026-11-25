@@ -6,6 +6,7 @@ import 'package:foldable/foldable.dart';
 
 import '../platform/platform_info.dart';
 import '../platform/system_vertical_bar.dart';
+import '../style/adaptive_brightness.dart';
 import 'duo_vertical_bar.dart';
 import 'hosted_duo_bar.dart';
 import 'hosted_top_toolbar.dart';
@@ -30,6 +31,7 @@ class AdaptiveToolbarHost extends StatefulWidget {
     required this.child,
     this.coveredOpacity = kToolbarCoveredOpacity,
     this.duoBarCoveredOpacity = kToolbarCoveredOpacity,
+    this.brightness,
     @visibleForTesting this.debugFold,
     @visibleForTesting this.debugVerticalBarEdge,
   }) : assert(coveredOpacity >= 0 && coveredOpacity <= 1),
@@ -48,6 +50,12 @@ class AdaptiveToolbarHost extends StatefulWidget {
   /// whatever the value. 0 hides the bar while a dialog or sheet covers the
   /// page, like native sheets presented over the system bars.
   final double duoBarCoveredOpacity;
+
+  /// The brightness native components below draw in, or null to follow the
+  /// nearest [AdaptiveBrightness] and then the device. Set it to the app's own
+  /// brightness so a light-mode app on a dark-mode device does not get dark
+  /// native components.
+  final Brightness? brightness;
 
   /// Replaces the platform's fold readings (the reserved regions) and the
   /// iOS 26 check, so the chrome can be exercised in widget tests anywhere.
@@ -120,7 +128,12 @@ class _AdaptiveToolbarHostState extends State<AdaptiveToolbarHost>
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => AdaptiveBrightness.scoped(
+    brightness: widget.brightness,
+    child: _buildChrome(context),
+  );
+
+  Widget _buildChrome(BuildContext context) {
     final fold = widget.debugFold ?? _fold;
     // The fixed chrome only exists where pages use the native iOS 26
     // toolbar; elsewhere pages keep their own Cupertino / Material bars.

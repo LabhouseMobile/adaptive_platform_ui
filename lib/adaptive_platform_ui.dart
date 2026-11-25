@@ -34,6 +34,7 @@ export 'src/platform/platform_info.dart';
 export 'src/utils/animation.dart';
 
 // Styles
+export 'src/style/adaptive_brightness.dart';
 export 'src/style/sf_symbol.dart';
 
 // Widgets

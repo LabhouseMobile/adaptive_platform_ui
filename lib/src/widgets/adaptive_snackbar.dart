@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../platform/platform_info.dart';
+import '../style/adaptive_brightness.dart';
 
 /// Snackbar type for different visual styles
 enum AdaptiveSnackBarType {
@@ -200,7 +201,7 @@ class _IOSSnackBarState extends State<_IOSSnackBar>
   }
 
   Color _getBackgroundColor(BuildContext context) {
-    final isDark = MediaQuery.platformBrightnessOf(context) == Brightness.dark;
+    final isDark = AdaptiveBrightness.of(context) == Brightness.dark;
 
     switch (widget.type) {
       case AdaptiveSnackBarType.success:

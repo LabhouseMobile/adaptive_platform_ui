@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
+import '../../style/adaptive_brightness.dart';
 
 /// Native iOS 26 slider implementation using platform views
 ///
@@ -83,7 +84,7 @@ class _IOS26SliderState extends State<IOS26Slider> {
   }
 
   Future<void> _syncBrightnessIfNeeded() async {
-    final isDark = MediaQuery.platformBrightnessOf(context) == Brightness.dark;
+    final isDark = AdaptiveBrightness.of(context) == Brightness.dark;
     if (_lastIsDark != isDark) {
       try {
         await _channel.invokeMethod('setBrightness', {'isDark': isDark});
@@ -163,7 +164,7 @@ class _IOS26SliderState extends State<IOS26Slider> {
         'activeColor': _colorToARGB(widget.activeColor!),
       if (widget.thumbColor != null)
         'thumbColor': _colorToARGB(widget.thumbColor!),
-      'isDark': MediaQuery.platformBrightnessOf(context) == Brightness.dark,
+      'isDark': AdaptiveBrightness.of(context) == Brightness.dark,
     };
   }
 

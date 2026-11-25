@@ -2,6 +2,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../platform/platform_info.dart';
+import '../style/adaptive_brightness.dart';
 
 /// A widget that applies a platform-specific blur effect to its background
 ///
@@ -86,7 +87,7 @@ class AdaptiveBlurView extends StatelessWidget {
   }
 
   LinearGradient _getLiquidGlassGradient(BuildContext context) {
-    final isDark = MediaQuery.of(context).platformBrightness == Brightness.dark;
+    final isDark = AdaptiveBrightness.of(context) == Brightness.dark;
 
     switch (blurStyle) {
       case BlurStyle.systemUltraThinMaterial:
@@ -173,7 +174,7 @@ class AdaptiveBlurView extends StatelessWidget {
   }
 
   List<Color> _getGlassOverlayColors(BuildContext context) {
-    final isDark = MediaQuery.of(context).platformBrightness == Brightness.dark;
+    final isDark = AdaptiveBrightness.of(context) == Brightness.dark;
 
     if (isDark) {
       return [
@@ -191,7 +192,7 @@ class AdaptiveBlurView extends StatelessWidget {
   }
 
   Color _getBorderColor(BuildContext context) {
-    final isDark = MediaQuery.of(context).platformBrightness == Brightness.dark;
+    final isDark = AdaptiveBrightness.of(context) == Brightness.dark;
 
     switch (blurStyle) {
       case BlurStyle.systemUltraThinMaterial:
@@ -302,7 +303,7 @@ class Ios26NativeBlurViewState extends State<Ios26NativeBlurView> {
   Future<void> _syncBrightnessIfNeeded() async {
     final ch = _channel;
     if (ch == null) return;
-    final isDark = MediaQuery.platformBrightnessOf(context) == Brightness.dark;
+    final isDark = AdaptiveBrightness.of(context) == Brightness.dark;
     if (_lastIsDark != isDark) {
       try {
         await ch.invokeMethod('setBrightness', {'isDark': isDark});
@@ -336,7 +337,7 @@ class Ios26NativeBlurViewState extends State<Ios26NativeBlurView> {
               creationParams: {
                 'blurStyle': widget.blurStyle.toUIBlurEffectStyle(),
                 'isDark':
-                    MediaQuery.platformBrightnessOf(context) == Brightness.dark,
+                    AdaptiveBrightness.of(context) == Brightness.dark,
               },
               creationParamsCodec: const StandardMessageCodec(),
               onPlatformViewCreated: (int id) {

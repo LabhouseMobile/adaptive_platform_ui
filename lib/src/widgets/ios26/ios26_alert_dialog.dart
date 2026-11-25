@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import '../adaptive_alert_dialog.dart';
+import '../../style/adaptive_brightness.dart';
 
 /// Action types for alert dialog buttons
 enum AlertActionStyle {
@@ -107,7 +108,7 @@ class _IOS26AlertDialogState extends State<IOS26AlertDialog> {
   int? _lastTint;
 
   bool get _isDark =>
-      MediaQuery.platformBrightnessOf(context) == Brightness.dark;
+      AdaptiveBrightness.of(context) == Brightness.dark;
   Color? get _effectiveTint => CupertinoTheme.of(context).primaryColor;
 
   @override

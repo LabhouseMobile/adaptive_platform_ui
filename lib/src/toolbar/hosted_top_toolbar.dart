@@ -8,6 +8,7 @@ import '../widgets/ios26/ios26_native_toolbar.dart';
 import 'duo_vertical_bar.dart';
 import 'toolbar_blend.dart';
 import 'toolbar_registry.dart';
+import '../style/adaptive_brightness.dart';
 
 /// Height of the toolbar's content area, excluding the status bar.
 const double kHostedToolbarHeight = 44.0;
@@ -345,7 +346,7 @@ class _Backdrop extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dark = MediaQuery.platformBrightnessOf(context) == Brightness.dark;
+    final dark = AdaptiveBrightness.of(context) == Brightness.dark;
     final base = dark ? const Color(0xFF000000) : const Color(0xFFFFFFFF);
     return IgnorePointer(
       child: OverflowBox(
