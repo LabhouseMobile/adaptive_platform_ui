@@ -36,10 +36,17 @@ class GlassCapsuleItem {
   /// map at 1, so a capsule that never sets it keeps today's layout.
   ///
   /// [id] is the item's identity, see [GlassCapsuleItem.id].
+  ///
+  /// An action with a [AdaptiveAppBarAction.menu] opens a native menu of its
+  /// entries instead of reporting a tap. The entries' ids are [menuIdStart]
+  /// and up, in order, and are what [IOS26GlassCapsule.onMenuTap] is called
+  /// with. A capsule with several items that have a menu gives each a start
+  /// past the previous item's entries, so the ids stay unique.
   factory GlassCapsuleItem.fromAction(
     AdaptiveAppBarAction action, {
     String? id,
     double widthFactor = 1,
+    int menuIdStart = 0,
   }) => GlassCapsuleItem(
     id: id,
     symbol: action.iosSymbol,
@@ -47,6 +54,19 @@ class GlassCapsuleItem {
     label: action.effectiveLabel,
     tint: action.tintColor,
     prominent: action.prominent,
+    menu: action.menu == null
+        ? null
+        : [
+            for (final (i, entry) in action.menu!.indexed)
+              GlassCapsuleMenuEntry(
+                id: menuIdStart + i,
+                // As in the overflow menu: without a name the entry shows its
+                // symbol alone.
+                title: entry.effectiveLabel ?? '',
+                symbol: entry.iosSymbol,
+                isDestructive: entry.isDestructive,
+              ),
+          ],
     fallback:
         action.iconWidget ??
         (action.icon != null ? Icon(action.icon, size: 22) : null),

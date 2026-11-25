@@ -661,13 +661,34 @@ class _ActionCapsule extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // The native menu reports only the entry's id, so each action's entries
+    // start past the previous action's.
+    final starts = <int>[];
+    var next = 0;
+    for (final action in actions) {
+      starts.add(next);
+      next += action.menu?.length ?? 0;
+    }
     return SizedBox(
       width: IOS26GlassCapsule.width,
       height: IOS26GlassCapsule.actionsHeight(actions.length),
       child: IOS26GlassCapsule(
-        items: [for (final a in actions) GlassCapsuleItem.fromAction(a)],
+        items: [
+          for (final (i, a) in actions.indexed)
+            GlassCapsuleItem.fromAction(a, menuIdStart: starts[i]),
+        ],
         tint: tint,
         onTap: (index) => actions[index].onPressed(),
+        onMenuTap: (id) {
+          for (final (i, a) in actions.indexed) {
+            final menu = a.menu;
+            if (menu == null) continue;
+            final index = id - starts[i];
+            if (index < 0 || index >= menu.length) continue;
+            menu[index].onPressed();
+            return;
+          }
+        },
       ),
     );
   }
