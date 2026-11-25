@@ -1,6 +1,7 @@
 import 'package:adaptive_platform_ui/src/widgets/ios26/ios26_native_tab_bar.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+
 import '../platform/platform_info.dart';
 import '../style/sf_symbol.dart';
 import 'adaptive_app_bar.dart';
@@ -387,7 +388,7 @@ class _AdaptiveScaffoldState extends State<AdaptiveScaffold> {
   // The scope is always installed, so the tree keeps its shape when
   // [AdaptiveScaffold.brightness] goes between null and a value.
   Widget build(BuildContext context) => AdaptiveBrightness(
-    brightness: _brightness,
+    brightness: widget.brightness ?? AdaptiveBrightness.maybeOf(context),
     child: _buildScaffold(context),
   );
 
@@ -794,9 +795,8 @@ class _AdaptiveScaffoldState extends State<AdaptiveScaffold> {
           title: _buildAppBarTitle(
             crossAxisAlignment: CrossAxisAlignment.start,
             subtitleFontSize: 13,
-            subtitleColor: Theme.of(
-              context,
-            ).textTheme.bodySmall?.color?.withValues(alpha: 0.7),
+            subtitleColor: Theme.of(context).textTheme.bodySmall?.color
+                ?.withValues(alpha: 0.7),
           ),
           centerTitle: widget.appBar!.titleWidget != null,
           actions: widget.appBar!.actions?.map((action) {
@@ -897,9 +897,8 @@ class _AdaptiveScaffoldState extends State<AdaptiveScaffold> {
         title: _buildAppBarTitle(
           crossAxisAlignment: CrossAxisAlignment.start,
           subtitleFontSize: 13,
-          subtitleColor: Theme.of(
-            context,
-          ).textTheme.bodySmall?.color?.withValues(alpha: 0.7),
+          subtitleColor: Theme.of(context).textTheme.bodySmall?.color
+              ?.withValues(alpha: 0.7),
         ),
         centerTitle: widget.appBar!.titleWidget != null,
         actions: widget.appBar!.actions?.map((action) {

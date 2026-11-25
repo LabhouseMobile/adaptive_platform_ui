@@ -34,8 +34,11 @@ class AdaptiveBrightness extends InheritedWidget {
     required super.child,
   });
 
-  /// The brightness native components below are drawn in.
-  final Brightness brightness;
+  /// The brightness native components below are drawn in, or null to set
+  /// nothing: [maybeOf] is then null below, and [of] the device's. The widgets
+  /// that take a `brightness` install a scope with a null value when they are
+  /// given none, so their tree keeps its shape whether it is set or not.
+  final Brightness? brightness;
 
   /// The brightness set by the nearest [AdaptiveBrightness], or null when
   /// there is none.

@@ -291,6 +291,7 @@ void main() {
       WidgetTester tester, {
       required Brightness cupertino,
       Brightness? scope,
+      Widget Function(Widget control)? wrap,
     }) async {
       final sent = <bool>[];
       final channels = [
@@ -318,6 +319,7 @@ void main() {
       });
 
       Widget control = IOS26SegmentedControl(
+        height: 44,
         labels: const ['a', 'b'],
         selectedIndex: 0,
         onValueChanged: (_) {},
@@ -325,6 +327,7 @@ void main() {
       if (scope != null) {
         control = AdaptiveBrightness(brightness: scope, child: control);
       }
+      if (wrap != null) control = wrap(control);
       await tester.pumpWidget(
         _onDevice(
           Brightness.dark,
@@ -352,6 +355,34 @@ void main() {
       tester,
     ) async {
       expect(await sentIsDark(tester, cupertino: Brightness.light), [false]);
+    });
+
+    testWidgets('the widgets that take a brightness do not hide the theme', (
+      tester,
+    ) async {
+      // An app that adopts none of the new API: a light theme on a dark
+      // device. A scaffold, host or button above the control publishes no
+      // brightness of its own, so the control still follows the theme.
+      final wraps = <String, Widget Function(Widget)>{
+        'AdaptiveScaffold': (c) => AdaptiveScaffold(body: Center(child: c)),
+        'AdaptiveToolbarHost': (c) =>
+            AdaptiveToolbarHost(child: Center(child: c)),
+        'AdaptiveButton': (c) => AdaptiveButton.child(
+          onPressed: () {},
+          child: SizedBox(width: 200, height: 100, child: c),
+        ),
+      };
+      for (final entry in wraps.entries) {
+        expect(
+          await sentIsDark(
+            tester,
+            cupertino: Brightness.light,
+            wrap: entry.value,
+          ),
+          [false],
+          reason: entry.key,
+        );
+      }
     });
   });
 }

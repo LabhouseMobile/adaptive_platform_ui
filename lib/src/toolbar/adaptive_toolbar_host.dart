@@ -131,7 +131,7 @@ class _AdaptiveToolbarHostState extends State<AdaptiveToolbarHost>
   // The scope is always installed, so the tree keeps its shape when
   // [AdaptiveToolbarHost.brightness] goes between null and a value.
   Widget build(BuildContext context) => AdaptiveBrightness(
-    brightness: widget.brightness ?? AdaptiveBrightness.of(context),
+    brightness: widget.brightness ?? AdaptiveBrightness.maybeOf(context),
     child: _buildChrome(context),
   );
 

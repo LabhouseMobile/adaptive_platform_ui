@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+
 import '../platform/platform_info.dart';
 import '../style/adaptive_brightness.dart';
 import '../style/sf_symbol.dart';
@@ -171,7 +172,7 @@ class AdaptiveButton extends StatelessWidget {
   // The scope is always installed, so the tree keeps its shape when
   // [brightness] goes between null and a value.
   Widget build(BuildContext context) => AdaptiveBrightness(
-    brightness: brightness ?? AdaptiveBrightness.of(context),
+    brightness: brightness ?? AdaptiveBrightness.maybeOf(context),
     child: _buildButton(context),
   );
 
