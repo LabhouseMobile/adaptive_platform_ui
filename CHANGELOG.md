@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+* **FIX**: iPhone Duo: an action with a `menu` now opens its native menu in the vertical bar, as it does in the top toolbar, and choosing an entry calls the entry's `onPressed`. Until now the bar called the action's `onPressed`, so the menu could not be reached. `GlassCapsuleItem.fromAction` maps the menu to `GlassCapsuleMenuEntry`s; the new `menuIdStart` keeps the entry ids unique when a capsule has several items with a menu
+* **NEW**: iPhone Duo: an action with `prominent: true` is now drawn in the vertical bar on a fill in its `tintColor` (blue by default) with a white symbol, as the system's prominent toolbar button. Until now `prominent` only applied to the native top toolbar and was ignored in the vertical bar. An item built from a prominent action with `GlassCapsuleItem.fromAction` is drawn so in any `IOS26GlassCapsule`, on either axis. Actions that move into the overflow menu stay plain entries. A prominent item with only a Flutter icon gets a white icon on the fill
 
 ## [1.0.1-lh7]
 * **FIX**: A horizontal `IOS26GlassCapsule` created with a `widthFactor` below 1, or given a new item while one is below 1, no longer crashes with "Unable to activate constraint ... no common ancestor". The width constraints now wait until the buttons are in the capsule

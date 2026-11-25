@@ -22,6 +22,7 @@ class GlassCapsuleItem {
     this.badge,
     this.fallback,
     this.menu,
+    this.prominent = false,
     this.widthFactor = 1,
   });
 
@@ -35,16 +36,37 @@ class GlassCapsuleItem {
   /// map at 1, so a capsule that never sets it keeps today's layout.
   ///
   /// [id] is the item's identity, see [GlassCapsuleItem.id].
+  ///
+  /// An action with a [AdaptiveAppBarAction.menu] opens a native menu of its
+  /// entries instead of reporting a tap. The entries' ids are [menuIdStart]
+  /// and up, in order, and are what [IOS26GlassCapsule.onMenuTap] is called
+  /// with. A capsule with several items that have a menu gives each a start
+  /// past the previous item's entries, so the ids stay unique.
   factory GlassCapsuleItem.fromAction(
     AdaptiveAppBarAction action, {
     String? id,
     double widthFactor = 1,
+    int menuIdStart = 0,
   }) => GlassCapsuleItem(
     id: id,
     symbol: action.iosSymbol,
     title: action.iosSymbol == null ? action.title : null,
     label: action.effectiveLabel,
     tint: action.tintColor,
+    prominent: action.prominent,
+    menu: action.menu == null
+        ? null
+        : [
+            for (final (i, entry) in action.menu!.indexed)
+              GlassCapsuleMenuEntry(
+                id: menuIdStart + i,
+                // As in the overflow menu: without a name the entry shows its
+                // symbol alone.
+                title: entry.effectiveLabel ?? '',
+                symbol: entry.iosSymbol,
+                isDestructive: entry.isDestructive,
+              ),
+          ],
     fallback:
         action.iconWidget ??
         (action.icon != null ? Icon(action.icon, size: 22) : null),
@@ -109,6 +131,11 @@ class GlassCapsuleItem {
   /// of reporting a tap: the overflow control of the trailing bar.
   final List<GlassCapsuleMenuEntry>? menu;
 
+  /// Drawn on a fill in [tint] (blue by default) with a white symbol, for the
+  /// primary action of a screen, as the system's prominent toolbar button.
+  /// Any [IOS26GlassCapsule] draws it so, whatever its axis.
+  final bool prominent;
+
   /// Drawn where there is no UIKit (widget tests, other platforms).
   final Widget? fallback;
 
@@ -136,6 +163,7 @@ class GlassCapsuleItem {
     if (label != null) 'label': label,
     if (tint != null) 'tint': tint!.toARGB32(),
     if (badge != null && badge! > 0) 'badge': badge,
+    if (prominent) 'prominent': true,
     if (menu != null)
       'menu': [
         for (final entry in menu!)
@@ -354,7 +382,11 @@ class _IOS26GlassCapsuleState extends State<IOS26GlassCapsule> {
             child: item.canShowNatively
                 ? null
                 : IconTheme.merge(
-                    data: IconThemeData(color: item.tint ?? label),
+                    data: IconThemeData(
+                      color: item.prominent
+                          ? CupertinoColors.white
+                          : item.tint ?? label,
+                    ),
                     child: item.fallback ?? const SizedBox.shrink(),
                   ),
           ),

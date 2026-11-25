@@ -1,4 +1,5 @@
 import 'package:adaptive_platform_ui/adaptive_platform_ui.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -69,6 +70,104 @@ void main() {
         ).toNativeMap()['widthFactor'],
         .5,
       );
+    });
+
+    test('a prominent action reaches the native capsule as prominent', () {
+      final plain = AdaptiveAppBarAction(iosSymbol: 'plus', onPressed: () {});
+      final primary = AdaptiveAppBarAction(
+        iosSymbol: 'checkmark',
+        prominent: true,
+        onPressed: () {},
+      );
+
+      expect(GlassCapsuleItem.fromAction(plain).prominent, isFalse);
+      expect(
+        GlassCapsuleItem.fromAction(
+          plain,
+        ).toNativeMap().containsKey('prominent'),
+        isFalse,
+      );
+      expect(GlassCapsuleItem.fromAction(primary).prominent, isTrue);
+      expect(
+        GlassCapsuleItem.fromAction(primary).toNativeMap()['prominent'],
+        isTrue,
+      );
+    });
+
+    test('fromAction maps the action menu to menu entries', () {
+      final action = AdaptiveAppBarAction(
+        iosSymbol: 'ellipsis',
+        onPressed: () {},
+        menu: [
+          AdaptiveAppBarAction(
+            iosSymbol: 'pencil',
+            label: 'Edit',
+            onPressed: () {},
+          ),
+          AdaptiveAppBarAction(
+            iosSymbol: 'trash',
+            label: 'Delete',
+            isDestructive: true,
+            onPressed: () {},
+          ),
+          AdaptiveAppBarAction(iosSymbol: 'star', onPressed: () {}),
+        ],
+      );
+
+      expect(GlassCapsuleItem.fromAction(action).menu!.map((e) => e.id), [
+        0,
+        1,
+        2,
+      ]);
+      final shifted = GlassCapsuleItem.fromAction(action, menuIdStart: 5).menu!;
+      expect(shifted.map((e) => e.id), [5, 6, 7]);
+      expect(shifted.map((e) => e.title), ['Edit', 'Delete', '']);
+      expect(shifted.map((e) => e.symbol), ['pencil', 'trash', 'star']);
+      expect(shifted.map((e) => e.isDestructive), [false, true, false]);
+      expect(
+        GlassCapsuleItem.fromAction(
+          AdaptiveAppBarAction(iosSymbol: 'plus', onPressed: () {}),
+        ).menu,
+        isNull,
+      );
+    });
+
+    testWidgets('a prominent item with only a Flutter icon gets a white icon', (
+      tester,
+    ) async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+      try {
+        Future<Color?> iconColor({required bool prominent, Color? tint}) async {
+          await tester.pumpWidget(
+            _host(
+              SizedBox(
+                width: IOS26GlassCapsule.width,
+                height: IOS26GlassCapsule.height,
+                child: IOS26GlassCapsule(
+                  key: UniqueKey(),
+                  items: [
+                    GlassCapsuleItem(
+                      prominent: prominent,
+                      tint: tint,
+                      fallback: const Icon(Icons.check),
+                    ),
+                  ],
+                  onTap: (_) {},
+                ),
+              ),
+            ),
+          );
+          return IconTheme.of(tester.element(find.byIcon(Icons.check))).color;
+        }
+
+        expect(
+          await iconColor(prominent: true, tint: CupertinoColors.systemBlue),
+          CupertinoColors.white,
+        );
+        expect(await iconColor(prominent: false), isNot(CupertinoColors.white));
+      } finally {
+        debugDefaultTargetPlatformOverride = null;
+      }
     });
 
     testWidgets('sends symbol size and weight only when they are set', (

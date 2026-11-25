@@ -124,6 +124,11 @@ class iOS26GlassCapsuleView: NSObject, FlutterPlatformView {
     private var selectedIndex: Int?
     private var tint: UIColor?
     private var inset: CGFloat = 0
+
+    /// The room the title of a prominent item keeps inside its fill. The fill
+    /// itself covers the whole button, with no glass margin around it.
+    private static let prominentTitleInsets = NSDirectionalEdgeInsets(
+        top: 3, leading: 3, bottom: 3, trailing: 3)
     private var stackTop: NSLayoutConstraint?
     private var stackBottom: NSLayoutConstraint?
     private var stackLeading: NSLayoutConstraint?
@@ -639,15 +644,28 @@ class iOS26GlassCapsuleView: NSObject, FlutterPlatformView {
             let item = items[index]
             let selected = index == selectedIndex
             let itemTint = (item["tint"] as? NSNumber).map { Self.colorFromARGB($0.intValue) }
+            let prominent = (item["prominent"] as? Bool) ?? false
 
-            var config = UIButton.Configuration.plain()
-            config.contentInsets = .zero
+            var config: UIButton.Configuration
+            if prominent {
+                // The primary action: a fill in the tint (blue by default)
+                // over the whole button, with a white symbol.
+                config = UIButton.Configuration.filled()
+                config.cornerStyle = .capsule
+                config.baseBackgroundColor = itemTint ?? tint ?? .systemBlue
+            } else {
+                config = UIButton.Configuration.plain()
+            }
+            // A title lays out inside the fill, not across the whole button.
+            config.contentInsets = prominent ? Self.prominentTitleInsets : .zero
             let symbolConfiguration = UIImage.SymbolConfiguration(
                 pointSize: symbolPointSize, weight: symbolImageWeight)
             config.preferredSymbolConfigurationForImage = symbolConfiguration
 
             let color: UIColor
-            if selectedIndex != nil {
+            if prominent {
+                color = .white
+            } else if selectedIndex != nil {
                 // A tab: tinted while selected, label colour otherwise.
                 color = selected ? (itemTint ?? tint ?? .systemBlue) : .label
             } else {
